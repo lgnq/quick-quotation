@@ -125,7 +125,7 @@
     .margin-value-text {
       font-size: clamp(16px, 4vw, 21px);
     }
-    .calc-field, .margin-box {
+    .calc-field, .margin-box, .vat-box {
       height: var(--dynamic-field-height, clamp(34px, 4.8dvh, 56px));
     }
     .keypad-cell {
@@ -196,7 +196,7 @@
       .margin-value-text {
         font-size: clamp(13.5px, 3.4vw, 16px) !important;
       }
-      .calc-field, .margin-box {
+      .calc-field, .margin-box, .vat-box {
         border-radius: 9px;
       }
     }
@@ -260,7 +260,7 @@
         height: auto;
         min-height: 100dvh;
       }
-      .calc-field, .margin-box, .currency-trigger-btn {
+      .calc-field, .margin-box, .vat-box, .currency-trigger-btn {
         height: 32px !important;
       }
     }
@@ -459,9 +459,10 @@
       <div class="margin-box relative flex-1 min-w-0" id="margin-combobox">
         <div
           id="margin-field-box"
-          class="margin-value-text w-full h-full bg-[#e5e7eb] text-[#111827] font-semibold rounded-xl flex items-center justify-end border border-transparent transition-all cursor-pointer"
+          title="点击自定义 Margin 或下拉选择"
+          class="margin-value-text w-full h-full bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#111827] font-semibold rounded-xl flex items-stretch border border-[#d1d5db] shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all cursor-pointer overflow-hidden"
         >
-          <div id="margin-input-area" class="flex-1 h-full flex items-center justify-end pr-1.5 pl-2.5 select-none">
+          <div id="margin-input-area" class="flex-1 h-full flex items-center justify-end pr-2 pl-2.5 select-none">
             <span id="val-margin" class="tabular-nums">10</span>
             <span class="ml-0.5 text-[#374151]">%</span>
           </div>
@@ -469,10 +470,10 @@
             id="margin-dropdown-btn"
             type="button"
             aria-label="选择预设毛利率"
-            class="h-full px-2 sm:px-3 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-xl transition-colors"
+            class="h-full px-2 sm:px-3 border-l border-[#d1d5db] flex items-center justify-center text-[#4b5563] hover:bg-black/5 active:bg-black/10 transition-colors"
           >
             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clip-rule="evenodd" />
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
@@ -550,31 +551,31 @@
 
       <!-- 8. 第三币种 自定义 VAT -->
       <div class="flex items-center justify-between gap-2 sm:gap-4 min-w-0">
-        <div id="label-cny-vat" class="row-label-text font-medium text-[#333333] w-[44%] sm:w-[38%] shrink-0 flex items-center gap-1 flex-wrap min-w-0">
+        <div id="label-cny-vat" class="row-label-text font-medium text-[#333333] w-[44%] sm:w-[38%] shrink-0 flex items-center gap-1.5 min-w-0">
           <span id="third-vat-flag" class="currency-flag leading-none shrink-0">🇨🇳</span>
-          <span id="third-vat-label-text" class="truncate">CNY</span>
-          <div class="relative inline-flex items-center" id="vat-combobox">
+          <span id="third-vat-label-text" class="truncate shrink-0">CNY</span>
+          <div class="vat-box relative inline-flex items-center min-w-0" id="vat-combobox">
             <div
               id="vat-field-box"
-              title="点击自定义 VAT 税率"
-              class="vat-pill-text inline-flex items-center bg-[#e5e7eb] hover:bg-gray-300/80 text-[#111827] font-semibold rounded-md border border-transparent transition-all cursor-pointer"
+              title="点击自定义 VAT 税率或下拉选择"
+              class="vat-pill-text h-full inline-flex items-stretch bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#111827] font-semibold rounded-xl border border-[#d1d5db] shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all cursor-pointer overflow-hidden"
             >
-              <div id="vat-input-area" class="flex items-center pl-1.5 pr-0.5 py-0.5 select-none">
+              <div id="vat-input-area" class="h-full flex items-center px-2 select-none whitespace-nowrap">
                 <span id="val-vat" class="tabular-nums">13</span>
                 <span class="ml-0.5 text-[#374151]">%</span>
+                <span class="vat-suffix-text ml-1 text-[#4b5563] font-medium">VAT</span>
               </div>
               <button
                 id="vat-dropdown-btn"
                 type="button"
                 aria-label="选择预设 VAT 税率"
-                class="px-1 py-0.5 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-md transition-colors"
+                class="h-full px-1.5 sm:px-2.5 border-l border-[#d1d5db] flex items-center justify-center text-[#4b5563] hover:bg-black/5 active:bg-black/10 transition-colors"
               >
-                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                 </svg>
               </button>
             </div>
-            <span class="vat-suffix-text ml-1 text-[#333333]">VAT</span>
 
             <!-- 预设 VAT 税率下拉菜单 -->
             <ul
@@ -582,13 +583,13 @@
               role="listbox"
               class="hidden absolute left-0 bottom-full mb-1 w-28 max-h-52 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1 z-40 text-sm"
             >
-              <li data-vat="0" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
-              <li data-vat="6" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">6%</li>
-              <li data-vat="9" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">9%</li>
-              <li data-vat="13" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">13%</li>
-              <li data-vat="16" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">16%</li>
-              <li data-vat="17" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">17%</li>
-              <li data-vat="20" class="vat-option px-3.5 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
+              <li data-vat="0" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0% VAT</li>
+              <li data-vat="6" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">6% VAT</li>
+              <li data-vat="9" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">9% VAT</li>
+              <li data-vat="13" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">13% VAT</li>
+              <li data-vat="16" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">16% VAT</li>
+              <li data-vat="17" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">17% VAT</li>
+              <li data-vat="20" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20% VAT</li>
             </ul>
           </div>
         </div>
@@ -1369,22 +1370,22 @@
 
       // Margin 框高亮与文本更新
       if (isMarginActive) {
-        marginFieldBox.classList.remove('bg-[#e5e7eb]', 'border-transparent');
-        marginFieldBox.classList.add('bg-blue-50/60', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
+        marginFieldBox.classList.remove('bg-[#f3f4f6]', 'border-[#d1d5db]');
+        marginFieldBox.classList.add('bg-blue-50/80', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
         valMarginEl.textContent = state.marginRawInput === '' ? '0' : state.marginRawInput;
       } else {
-        marginFieldBox.classList.add('bg-[#e5e7eb]', 'border-transparent');
-        marginFieldBox.classList.remove('bg-blue-50/60', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
+        marginFieldBox.classList.add('bg-[#f3f4f6]', 'border-[#d1d5db]');
+        marginFieldBox.classList.remove('bg-blue-50/80', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
         valMarginEl.textContent = String(state.marginPercent);
       }
 
       // VAT 框高亮与文本更新
       if (isVatActive) {
-        vatFieldBox.classList.remove('bg-[#e5e7eb]', 'border-transparent');
+        vatFieldBox.classList.remove('bg-[#f3f4f6]', 'border-[#d1d5db]');
         vatFieldBox.classList.add('bg-blue-50/80', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
         valVatEl.textContent = state.vatRawInput === '' ? '0' : state.vatRawInput;
       } else {
-        vatFieldBox.classList.add('bg-[#e5e7eb]', 'border-transparent');
+        vatFieldBox.classList.add('bg-[#f3f4f6]', 'border-[#d1d5db]');
         vatFieldBox.classList.remove('bg-blue-50/80', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
         valVatEl.textContent = String(state.vatPercent);
       }
