@@ -89,7 +89,7 @@
       line-height: 1.2;
     }
     .top-action-btn {
-      font-size: clamp(12px, 3.1vw, 15px);
+      font-size: clamp(13px, 3.3vw, 15px);
       padding: 6px 12px;
     }
     .section-tag {
@@ -159,7 +159,7 @@
         line-height: 1.15 !important;
       }
       .top-action-btn {
-        font-size: clamp(11px, 2.7vw, 13px) !important;
+        font-size: clamp(11.5px, 2.9vw, 13px) !important;
         padding: 4px 8px !important;
         border-radius: 9px;
       }
@@ -221,7 +221,7 @@
         font-size: 9.5px !important;
       }
       .top-action-btn {
-        font-size: 10.5px !important;
+        font-size: 11px !important;
         padding: 3px 7px !important;
       }
       .section-tag {
@@ -271,8 +271,9 @@
   <!-- 全屏主容器：100% 自适应屏幕宽高，桌面端居中限宽更美观，移动端全宽贴合 -->
   <div class="app-shell w-full max-w-2xl mx-auto h-full flex-1 flex flex-col justify-between overflow-hidden">
     
-    <!-- 1. 顶部标题与汇率栏卡片 -->
+    <!-- 1. 顶部标题与汇率栏卡片（第一行：标题；第二行：汇率与时间；第三行：统一风格按钮栏） -->
     <header id="header-card" class="app-card bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] shrink-0 flex flex-col">
+      <!-- 第一行：标题 -->
       <div class="relative flex items-center justify-center">
         <h1 class="app-title text-center font-bold text-[#1d63ed] tracking-tight">
           Quick Quotation
@@ -285,54 +286,56 @@
           Install App
         </button>
       </div>
-      <div class="flex items-center justify-between gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
-        <div id="rate-display" class="rate-main-text text-[#555555] min-w-0 flex flex-col flex-1">
-          <div class="flex items-center gap-1 flex-wrap">
-            <div
-              id="active-rates-text"
-              title="点击自定义修改汇率"
-              class="cursor-pointer rounded-lg px-1 py-0.5 -ml-1 hover:bg-blue-50/80 transition-colors inline-flex items-center gap-1 flex-wrap"
-            >
-              <span>1 <span class="font-medium text-[#333333]">EUR</span> = <span class="font-bold text-[#1d63ed]">1.080</span> USD · 1 <span class="font-medium text-[#333333]">EUR</span> = <span class="font-bold text-[#1d63ed]">7.300</span> CNY</span>
-            </div>
-            <button
-              id="edit-rate-btn"
-              type="button"
-              title="自定义汇率"
-              class="text-[10px] sm:text-xs text-[#1d63ed] hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition-colors inline-flex items-center gap-0.5 shrink-0"
-            >
-              <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
-              </svg>
-              <span>Edit</span>
-            </button>
+
+      <!-- 第二行：汇率与更新时间 -->
+      <div id="rate-display" class="rate-main-text text-[#555555] min-w-0 flex flex-col">
+        <div class="flex items-center gap-1 flex-wrap">
+          <div
+            id="active-rates-text"
+            title="点击自定义修改汇率"
+            class="cursor-pointer rounded-lg px-1 py-0.5 -ml-1 hover:bg-blue-50/80 transition-colors inline-flex items-center gap-1 flex-wrap"
+          >
+            <span>1 <span class="font-medium text-[#333333]">EUR</span> = <span class="font-bold text-[#1d63ed]">1.080</span> USD · 1 <span class="font-medium text-[#333333]">EUR</span> = <span class="font-bold text-[#1d63ed]">7.300</span> CNY</span>
           </div>
-          <div id="rate-date" class="rate-date-text text-[#888888] truncate">2026-11-24 00:00:00</div>
-        </div>
-        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
-          <button 
-            id="refresh-btn"
+          <button
+            id="edit-rate-btn"
             type="button"
-            class="top-action-btn font-semibold text-[#1d63ed] border border-[#1d63ed] rounded-xl hover:bg-blue-50 active:bg-blue-100 transition-colors shrink-0 flex items-center gap-1"
+            title="自定义汇率"
+            class="text-[10px] sm:text-xs text-[#1d63ed] hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition-colors inline-flex items-center gap-0.5 shrink-0"
           >
-            <span id="refresh-text">Refresh</span>
-          </button>
-          <button 
-            id="save-btn"
-            type="button"
-            class="top-action-btn font-semibold text-white bg-[#1d63ed] border border-[#1d63ed] rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors shrink-0 flex items-center gap-1"
-          >
-            <span>Save</span>
-          </button>
-          <button 
-            id="history-btn"
-            type="button"
-            class="top-action-btn font-semibold text-[#374151] bg-[#f3f4f6] border border-[#d1d5db] rounded-xl hover:bg-gray-200 active:bg-gray-300 transition-colors shrink-0 flex items-center gap-1"
-          >
-            <span>History</span>
-            <span id="history-badge" class="hidden text-[10px] px-1.5 py-0.2 bg-[#1d63ed] text-white rounded-full font-bold">0</span>
+            <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+            </svg>
+            <span>Edit</span>
           </button>
         </div>
+        <div id="rate-date" class="rate-date-text text-[#888888] truncate">2026-11-24 00:00:00</div>
+      </div>
+
+      <!-- 第三行：风格统一的 Refresh、Save、History 操作按钮栏 -->
+      <div class="grid grid-cols-3 gap-2 pt-0.5">
+        <button 
+          id="refresh-btn"
+          type="button"
+          class="top-action-btn w-full font-semibold text-[#1d63ed] bg-blue-50/60 border border-[#1d63ed]/35 rounded-xl hover:bg-blue-50 hover:border-[#1d63ed] active:bg-blue-100 transition-colors flex items-center justify-center gap-1"
+        >
+          <span id="refresh-text">Refresh</span>
+        </button>
+        <button 
+          id="save-btn"
+          type="button"
+          class="top-action-btn w-full font-semibold text-[#1d63ed] bg-blue-50/60 border border-[#1d63ed]/35 rounded-xl hover:bg-blue-50 hover:border-[#1d63ed] active:bg-blue-100 transition-colors flex items-center justify-center gap-1"
+        >
+          <span>Save</span>
+        </button>
+        <button 
+          id="history-btn"
+          type="button"
+          class="top-action-btn w-full font-semibold text-[#1d63ed] bg-blue-50/60 border border-[#1d63ed]/35 rounded-xl hover:bg-blue-50 hover:border-[#1d63ed] active:bg-blue-100 transition-colors flex items-center justify-center gap-1"
+        >
+          <span>History</span>
+          <span id="history-badge" class="hidden text-[10px] px-1.5 py-0.2 bg-[#1d63ed] text-white rounded-full font-bold">0</span>
+        </button>
       </div>
     </header>
 
@@ -1975,7 +1978,7 @@
       if (quotationHistory.length === 0) {
         historyListEl.innerHTML = `
           <div class="py-12 text-center text-gray-400 text-sm">
-            暂无保存的报价记录，点击右上角 <span class="text-[#1d63ed] font-medium">Save</span> 即可保存当前报价。
+            暂无保存的报价记录，点击顶部 <span class="text-[#1d63ed] font-medium">Save</span> 即可保存当前报价。
           </div>
         `;
         return;
