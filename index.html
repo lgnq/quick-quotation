@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#1d63ed" />
+  <meta name="description" content="Quick Quotation - 多币种分销成本与转售报价计算器（支持离线 PWA 与在线/自定义汇率）" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Quick Quotation" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
   <title>Quick Quotation</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -51,27 +55,36 @@
       background-color: #dc2626;
       transform: scale(0.99);
     }
-    /* 自适应弹性输入框与键盘单元格：随视口高度自动伸缩 */
+    /* 自适应弹性输入框与键盘单元格：优先保障手机端大字体与大触控热区 */
     .calc-field, .margin-box {
-      height: clamp(28px, 4.3dvh, 52px);
+      height: clamp(36px, 4.9dvh, 56px);
     }
     .keypad-cell {
-      height: clamp(38px, 6.4dvh, 76px);
+      height: clamp(46px, 7.1dvh, 80px);
     }
   </style>
 </head>
 <body class="bg-[#f3f5f8] app-viewport flex flex-col text-[#333333] overflow-hidden">
 
   <!-- 全屏主容器：100% 占满屏幕宽高，各个独立卡片与键盘处于同一层级 -->
-  <div class="w-full h-full flex-1 flex flex-col justify-between p-2 sm:p-3 lg:p-4 gap-2 sm:gap-2.5 overflow-hidden">
+  <div class="w-full h-full flex-1 flex flex-col justify-between p-1.5 sm:p-3 lg:p-4 gap-1.5 sm:gap-2.5 overflow-hidden">
     
     <!-- 1. 顶部标题与汇率栏卡片 -->
-    <header class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5 shrink-0 flex flex-col gap-1.5">
-      <h1 class="text-center text-[clamp(17px,3.2vw,22px)] font-bold text-[#1d63ed] tracking-tight leading-tight">
-        Quick Quotation
-      </h1>
+    <header class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-3 sm:px-6 lg:px-8 py-2 sm:py-3 shrink-0 flex flex-col gap-1.5">
+      <div class="relative flex items-center justify-center">
+        <h1 class="text-center text-[clamp(20px,4.5vw,24px)] font-bold text-[#1d63ed] tracking-tight leading-tight">
+          Quick Quotation
+        </h1>
+        <button
+          id="install-pwa-btn"
+          type="button"
+          class="hidden absolute right-0 px-3 py-1 text-xs font-semibold text-[#1d63ed] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-full transition-colors"
+        >
+          Install App
+        </button>
+      </div>
       <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-        <div id="rate-display" class="text-[clamp(11px,2.1vw,15px)] text-[#555555] leading-snug min-w-0 flex flex-col">
+        <div id="rate-display" class="text-[clamp(13px,3.2vw,16px)] text-[#555555] leading-snug min-w-0 flex flex-col">
           <div class="flex items-center gap-1.5 flex-wrap">
             <div
               id="active-rates-text"
@@ -84,64 +97,64 @@
               id="edit-rate-btn"
               type="button"
               title="自定义汇率"
-              class="text-[11px] text-[#1d63ed] hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition-colors inline-flex items-center gap-0.5 shrink-0"
+              class="text-xs sm:text-sm text-[#1d63ed] hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100 px-2 py-1 rounded-lg font-medium transition-colors inline-flex items-center gap-1 shrink-0"
             >
-              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
               </svg>
               <span>Edit</span>
             </button>
           </div>
-          <div id="rate-date" class="text-[clamp(10px,1.8vw,13px)] text-[#888888] mt-0.5">2026-11-24 00:00:00</div>
+          <div id="rate-date" class="text-[clamp(12px,2.8vw,14px)] text-[#888888] mt-0.5">2026-11-24 00:00:00</div>
         </div>
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+        <div class="flex items-center gap-2 shrink-0 ml-auto">
           <button 
             id="refresh-btn"
             type="button"
-            class="px-2.5 sm:px-3.5 py-1 text-[clamp(12px,2vw,14px)] font-medium text-[#1d63ed] border border-[#1d63ed] rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors shrink-0 flex items-center gap-1"
+            class="px-3 sm:px-4 py-1.5 sm:py-2 text-[clamp(13px,3.2vw,15px)] font-semibold text-[#1d63ed] border border-[#1d63ed] rounded-xl hover:bg-blue-50 active:bg-blue-100 transition-colors shrink-0 flex items-center gap-1"
           >
             <span id="refresh-text">Refresh</span>
           </button>
           <button 
             id="save-btn"
             type="button"
-            class="px-2.5 sm:px-3.5 py-1 text-[clamp(12px,2vw,14px)] font-medium text-white bg-[#1d63ed] border border-[#1d63ed] rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shrink-0 flex items-center gap-1"
+            class="px-3.5 sm:px-4 py-1.5 sm:py-2 text-[clamp(13px,3.2vw,15px)] font-semibold text-white bg-[#1d63ed] border border-[#1d63ed] rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors shrink-0 flex items-center gap-1"
           >
             <span>Save</span>
           </button>
           <button 
             id="history-btn"
             type="button"
-            class="px-2.5 sm:px-3.5 py-1 text-[clamp(12px,2vw,14px)] font-medium text-[#374151] bg-[#f3f4f6] border border-[#d1d5db] rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors shrink-0 flex items-center gap-1"
+            class="px-3 sm:px-4 py-1.5 sm:py-2 text-[clamp(13px,3.2vw,15px)] font-semibold text-[#374151] bg-[#f3f4f6] border border-[#d1d5db] rounded-xl hover:bg-gray-200 active:bg-gray-300 transition-colors shrink-0 flex items-center gap-1.5"
           >
             <span>History</span>
-            <span id="history-badge" class="hidden text-[11px] px-1.5 py-0.2 bg-[#1d63ed] text-white rounded-full font-semibold">0</span>
+            <span id="history-badge" class="hidden text-xs px-1.5 py-0.5 bg-[#1d63ed] text-white rounded-full font-bold">0</span>
           </button>
         </div>
       </div>
     </header>
 
     <!-- 2. 独立 COST 卡片（与键盘卡片同级） -->
-    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col justify-between gap-1.5 sm:gap-2 flex-[3] min-h-0">
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5 flex flex-col justify-between gap-1.5 sm:gap-2 flex-[3] min-h-0">
       <div class="flex items-center justify-between px-0.5 shrink-0">
-        <span class="text-[clamp(12px,2vw,14px)] font-semibold text-[#1d63ed] uppercase tracking-wider">Cost</span>
+        <span class="text-[clamp(13px,3vw,15px)] font-bold text-[#1d63ed] uppercase tracking-wider">Cost</span>
       </div>
 
       <!-- 1. 主币种 Cost -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <div class="relative w-[42%] sm:w-[38%] shrink-0" id="base-currency-combobox">
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <div class="relative w-[43%] sm:w-[38%] shrink-0" id="base-currency-combobox">
           <button
             id="currency-trigger"
             type="button"
-            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3 py-1.5 text-[clamp(13px,2.2vw,17px)] font-medium transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
+            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3.5 py-2 text-[clamp(15px,3.6vw,18px)] font-semibold transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
             aria-haspopup="listbox"
             aria-expanded="false"
           >
             <span class="flex items-center gap-1.5 truncate">
-              <span id="selected-flag" class="text-[clamp(15px,2.4vw,19px)] leading-none shrink-0">🇪🇺</span>
+              <span id="selected-flag" class="text-[clamp(17px,4vw,20px)] leading-none shrink-0">🇪🇺</span>
               <span id="selected-label" class="truncate">EUR (€)</span>
             </span>
-            <svg class="w-4 h-4 text-[#4b5563] shrink-0 transition-transform duration-150" id="currency-chevron" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#4b5563] shrink-0 transition-transform duration-150" id="currency-chevron" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -149,7 +162,7 @@
           <ul
             id="currency-menu"
             role="listbox"
-            class="hidden absolute left-0 top-full mt-1.5 w-60 sm:w-64 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+            class="hidden absolute left-0 top-full mt-1.5 w-64 sm:w-72 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(14px,3.4vw,16px)]"
           ></ul>
         </div>
 
@@ -157,26 +170,26 @@
           data-field="eurDisti"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-eurDisti" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">€</span>
-          <span id="val-eurDisti" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">1.000</span>
+          <span id="sym-eurDisti" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">€</span>
+          <span id="val-eurDisti" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">1.000</span>
         </div>
       </div>
 
       <!-- 2. 第二币种 Cost -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <div class="relative w-[42%] sm:w-[38%] shrink-0" id="second-currency-combobox">
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <div class="relative w-[43%] sm:w-[38%] shrink-0" id="second-currency-combobox">
           <button
             id="second-currency-trigger"
             type="button"
-            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3 py-1.5 text-[clamp(13px,2.2vw,17px)] font-medium transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
+            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3.5 py-2 text-[clamp(15px,3.6vw,18px)] font-semibold transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
             aria-haspopup="listbox"
             aria-expanded="false"
           >
             <span class="flex items-center gap-1.5 truncate">
-              <span id="second-selected-flag" class="text-[clamp(15px,2.4vw,19px)] leading-none shrink-0">🇺🇸</span>
+              <span id="second-selected-flag" class="text-[clamp(17px,4vw,20px)] leading-none shrink-0">🇺🇸</span>
               <span id="second-selected-label" class="truncate">USD ($)</span>
             </span>
-            <svg class="w-4 h-4 text-[#4b5563] shrink-0 transition-transform duration-150" id="second-currency-chevron" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#4b5563] shrink-0 transition-transform duration-150" id="second-currency-chevron" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -184,7 +197,7 @@
           <ul
             id="second-currency-menu"
             role="listbox"
-            class="hidden absolute left-0 top-full mt-1.5 w-60 sm:w-64 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+            class="hidden absolute left-0 top-full mt-1.5 w-64 sm:w-72 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(14px,3.4vw,16px)]"
           ></ul>
         </div>
 
@@ -192,26 +205,26 @@
           data-field="usdDisti"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-usdDisti" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">$</span>
-          <span id="val-usdDisti" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+          <span id="sym-usdDisti" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">$</span>
+          <span id="val-usdDisti" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
         </div>
       </div>
 
       <!-- 3. 第三币种 Cost -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <div class="relative w-[42%] sm:w-[38%] shrink-0" id="third-currency-combobox">
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <div class="relative w-[43%] sm:w-[38%] shrink-0" id="third-currency-combobox">
           <button
             id="third-currency-trigger"
             type="button"
-            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3 py-1.5 text-[clamp(13px,2.2vw,17px)] font-medium transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
+            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3.5 py-2 text-[clamp(15px,3.6vw,18px)] font-semibold transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
             aria-haspopup="listbox"
             aria-expanded="false"
           >
             <span class="flex items-center gap-1.5 truncate">
-              <span id="third-selected-flag" class="text-[clamp(15px,2.4vw,19px)] leading-none shrink-0">🇨🇳</span>
+              <span id="third-selected-flag" class="text-[clamp(17px,4vw,20px)] leading-none shrink-0">🇨🇳</span>
               <span id="third-selected-label" class="truncate">CNY (¥)</span>
             </span>
-            <svg class="w-4 h-4 text-[#4b5563] shrink-0 transition-transform duration-150" id="third-currency-chevron" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#4b5563] shrink-0 transition-transform duration-150" id="third-currency-chevron" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -219,7 +232,7 @@
           <ul
             id="third-currency-menu"
             role="listbox"
-            class="hidden absolute left-0 top-full mt-1.5 w-60 sm:w-64 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+            class="hidden absolute left-0 top-full mt-1.5 w-64 sm:w-72 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(14px,3.4vw,16px)]"
           ></ul>
         </div>
 
@@ -227,23 +240,23 @@
           data-field="cnyDisti"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-cnyDisti" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">¥</span>
-          <span id="val-cnyDisti" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+          <span id="sym-cnyDisti" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">¥</span>
+          <span id="val-cnyDisti" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
         </div>
       </div>
     </section>
 
     <!-- 3. 独立 Margin (%) 卡片（支持预设下拉选择 + 自定义数字键盘/物理键盘输入） -->
-    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 shrink-0">
-      <label class="text-[clamp(13px,2.2vw,17px)] font-medium text-[#333333] w-[42%] sm:w-[38%] shrink-0">
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-2.5 sm:gap-4 shrink-0">
+      <label class="text-[clamp(15px,3.6vw,18px)] font-semibold text-[#333333] w-[43%] sm:w-[38%] shrink-0">
         Margin(%)
       </label>
       <div class="margin-box relative flex-1 min-w-0" id="margin-combobox">
         <div
           id="margin-field-box"
-          class="w-full h-full bg-[#e5e7eb] text-[#111827] font-medium text-[clamp(14px,2.4vw,18px)] rounded-xl flex items-center justify-end border border-transparent transition-all cursor-pointer"
+          class="w-full h-full bg-[#e5e7eb] text-[#111827] font-semibold text-[clamp(17px,4.2vw,21px)] rounded-xl flex items-center justify-end border border-transparent transition-all cursor-pointer"
         >
-          <div id="margin-input-area" class="flex-1 h-full flex items-center justify-end pr-1.5 pl-3 select-none">
+          <div id="margin-input-area" class="flex-1 h-full flex items-center justify-end pr-2 pl-3 select-none">
             <span id="val-margin" class="tabular-nums">10</span>
             <span class="ml-0.5 text-[#374151]">%</span>
           </div>
@@ -251,9 +264,9 @@
             id="margin-dropdown-btn"
             type="button"
             aria-label="选择预设毛利率"
-            class="h-full px-2.5 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-xl transition-colors"
+            class="h-full px-3 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-xl transition-colors"
           >
-            <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="w-5 h-5 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -263,85 +276,85 @@
         <ul
           id="margin-menu"
           role="listbox"
-          class="hidden absolute right-0 top-full mt-1.5 w-36 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+          class="hidden absolute right-0 top-full mt-1.5 w-40 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(15px,3.6vw,17px)]"
         >
-          <li data-margin="0" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
-          <li data-margin="5" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">5%</li>
-          <li data-margin="8" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">8%</li>
-          <li data-margin="10" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">10%</li>
-          <li data-margin="12" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">12%</li>
-          <li data-margin="15" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">15%</li>
-          <li data-margin="18" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">18%</li>
-          <li data-margin="20" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
-          <li data-margin="25" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">25%</li>
-          <li data-margin="30" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">30%</li>
+          <li data-margin="0" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
+          <li data-margin="5" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">5%</li>
+          <li data-margin="8" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">8%</li>
+          <li data-margin="10" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">10%</li>
+          <li data-margin="12" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">12%</li>
+          <li data-margin="15" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">15%</li>
+          <li data-margin="18" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">18%</li>
+          <li data-margin="20" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
+          <li data-margin="25" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">25%</li>
+          <li data-margin="30" class="margin-option px-4 py-2 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">30%</li>
         </ul>
       </div>
     </section>
 
     <!-- 4. 独立 RESALE 卡片（与键盘卡片同级） -->
-    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col justify-between gap-1.5 sm:gap-2 flex-[4] min-h-0">
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5 flex flex-col justify-between gap-1.5 sm:gap-2 flex-[4] min-h-0">
       <div class="flex items-center justify-between px-0.5 shrink-0">
-        <span class="text-[clamp(12px,2vw,14px)] font-semibold text-[#1d63ed] uppercase tracking-wider">Resale</span>
+        <span class="text-[clamp(13px,3vw,15px)] font-bold text-[#1d63ed] uppercase tracking-wider">Resale</span>
       </div>
 
       <!-- 5. 主币种 Resale -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <label id="label-eur-resale" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
-          <span id="resale-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none">🇪🇺</span>
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <label id="label-eur-resale" class="text-[clamp(15px,3.6vw,18px)] font-medium text-[#333333] w-[43%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
+          <span id="resale-flag" class="text-[clamp(16px,3.8vw,20px)] leading-none">🇪🇺</span>
           <span id="resale-label-text" class="truncate">EUR (€)</span>
         </label>
         <div 
           data-field="eurResale"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-eurResale" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">€</span>
-          <span id="val-eurResale" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+          <span id="sym-eurResale" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">€</span>
+          <span id="val-eurResale" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
         </div>
       </div>
 
       <!-- 6. 第二币种 Resale -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <label id="label-usd-resale" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
-          <span id="second-resale-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none">🇺🇸</span>
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <label id="label-usd-resale" class="text-[clamp(15px,3.6vw,18px)] font-medium text-[#333333] w-[43%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
+          <span id="second-resale-flag" class="text-[clamp(16px,3.8vw,20px)] leading-none">🇺🇸</span>
           <span id="second-resale-label-text" class="truncate">USD ($)</span>
         </label>
         <div 
           data-field="usdResale"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-usdResale" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">$</span>
-          <span id="val-usdResale" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+          <span id="sym-usdResale" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">$</span>
+          <span id="val-usdResale" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
         </div>
       </div>
 
       <!-- 7. 第三币种 Resale -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <label id="label-cny-resale" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
-          <span id="third-resale-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none">🇨🇳</span>
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <label id="label-cny-resale" class="text-[clamp(15px,3.6vw,18px)] font-medium text-[#333333] w-[43%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
+          <span id="third-resale-flag" class="text-[clamp(16px,3.8vw,20px)] leading-none">🇨🇳</span>
           <span id="third-resale-label-text" class="truncate">CNY (¥)</span>
         </label>
         <div 
           data-field="cnyResale"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-cnyResale" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">¥</span>
-          <span id="val-cnyResale" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+          <span id="sym-cnyResale" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">¥</span>
+          <span id="val-cnyResale" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
         </div>
       </div>
 
       <!-- 8. 第三币种 自定义 VAT -->
-      <div class="flex items-center justify-between gap-3 sm:gap-4">
-        <div id="label-cny-vat" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] leading-tight shrink-0 flex items-center gap-1.5 flex-wrap">
-          <span id="third-vat-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none shrink-0">🇨🇳</span>
+      <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+        <div id="label-cny-vat" class="text-[clamp(14px,3.3vw,17px)] font-medium text-[#333333] w-[43%] sm:w-[38%] leading-tight shrink-0 flex items-center gap-1.5 flex-wrap">
+          <span id="third-vat-flag" class="text-[clamp(16px,3.8vw,20px)] leading-none shrink-0">🇨🇳</span>
           <span id="third-vat-label-text" class="leading-tight">CNY (¥)</span>
           <div class="relative inline-flex items-center" id="vat-combobox">
             <div
               id="vat-field-box"
               title="点击自定义 VAT 税率"
-              class="inline-flex items-center bg-[#e5e7eb] hover:bg-gray-300/80 text-[#111827] font-medium text-[clamp(12px,2vw,15px)] rounded-lg border border-transparent transition-all cursor-pointer"
+              class="inline-flex items-center bg-[#e5e7eb] hover:bg-gray-300/80 text-[#111827] font-semibold text-[clamp(14px,3.3vw,17px)] rounded-lg border border-transparent transition-all cursor-pointer"
             >
-              <div id="vat-input-area" class="flex items-center pl-2 pr-1 py-0.5 select-none">
+              <div id="vat-input-area" class="flex items-center pl-2.5 pr-1 py-1 select-none">
                 <span id="val-vat" class="tabular-nums">13</span>
                 <span class="ml-0.5 text-[#374151]">%</span>
               </div>
@@ -349,9 +362,9 @@
                 id="vat-dropdown-btn"
                 type="button"
                 aria-label="选择预设 VAT 税率"
-                class="px-1 py-0.5 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-lg transition-colors"
+                class="px-1.5 py-1 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-lg transition-colors"
               >
-                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                 </svg>
               </button>
@@ -362,15 +375,15 @@
             <ul
               id="vat-menu"
               role="listbox"
-              class="hidden absolute left-0 bottom-full mb-1.5 w-28 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1 z-40 text-[clamp(12px,2vw,14px)]"
+              class="hidden absolute left-0 bottom-full mb-1.5 w-32 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(14px,3.4vw,16px)]"
             >
-              <li data-vat="0" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
-              <li data-vat="6" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">6%</li>
-              <li data-vat="9" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">9%</li>
-              <li data-vat="13" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">13%</li>
-              <li data-vat="16" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">16%</li>
-              <li data-vat="17" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">17%</li>
-              <li data-vat="20" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
+              <li data-vat="0" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
+              <li data-vat="6" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">6%</li>
+              <li data-vat="9" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">9%</li>
+              <li data-vat="13" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">13%</li>
+              <li data-vat="16" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">16%</li>
+              <li data-vat="17" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">17%</li>
+              <li data-vat="20" class="vat-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
             </ul>
           </div>
         </div>
@@ -378,57 +391,57 @@
           data-field="cnyResaleVat"
           class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
         >
-          <span id="sym-cnyResaleVat" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">¥</span>
-          <span id="val-cnyResaleVat" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+          <span id="sym-cnyResaleVat" class="text-[clamp(16px,3.8vw,20px)] text-[#9ca3af] font-medium shrink-0">¥</span>
+          <span id="val-cnyResaleVat" class="text-[clamp(18px,4.4vw,23px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
         </div>
       </div>
     </section>
 
     <!-- 5. 底部自适应自定义数字键盘：与 COST、RESALE 卡片同级 -->
     <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden grid grid-cols-3 border border-gray-100 shrink-0 w-full">
-      <button type="button" data-key="1" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">1</button>
-      <button type="button" data-key="2" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">2</button>
-      <button type="button" data-key="3" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">3</button>
+      <button type="button" data-key="1" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">1</button>
+      <button type="button" data-key="2" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">2</button>
+      <button type="button" data-key="3" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">3</button>
       
-      <button type="button" data-key="4" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">4</button>
-      <button type="button" data-key="5" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">5</button>
-      <button type="button" data-key="6" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">6</button>
+      <button type="button" data-key="4" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">4</button>
+      <button type="button" data-key="5" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">5</button>
+      <button type="button" data-key="6" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">6</button>
       
-      <button type="button" data-key="7" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">7</button>
-      <button type="button" data-key="8" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">8</button>
-      <button type="button" data-key="9" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">9</button>
+      <button type="button" data-key="7" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">7</button>
+      <button type="button" data-key="8" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">8</button>
+      <button type="button" data-key="9" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">9</button>
       
-      <button type="button" data-key="0" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-gray-100 flex items-center justify-center transition-all">0</button>
-      <button type="button" data-key="." class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-gray-100 flex items-center justify-center transition-all">.</button>
-      <button type="button" data-key="C" class="keypad-btn-clear keypad-cell text-[clamp(20px,3.6vw,30px)] font-medium bg-[#ef3b3b] text-white flex items-center justify-center transition-all">C</button>
+      <button type="button" data-key="0" class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-gray-100 flex items-center justify-center transition-all">0</button>
+      <button type="button" data-key="." class="keypad-btn keypad-cell text-[clamp(24px,5.6vw,34px)] font-medium text-[#1d63ed] border-r border-gray-100 flex items-center justify-center transition-all">.</button>
+      <button type="button" data-key="C" class="keypad-btn-clear keypad-cell text-[clamp(24px,5.6vw,34px)] font-semibold bg-[#ef3b3b] text-white flex items-center justify-center transition-all">C</button>
     </section>
 
   </div>
 
   <!-- 轻量级提示 Toast -->
-  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-800/90 text-white text-xs px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-800/90 text-white text-sm px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
     汇率已更新
   </div>
 
   <!-- 自定义汇率弹窗 Modal -->
   <div id="custom-rate-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-        <span class="text-base font-semibold text-[#111827]">自定义汇率 (Custom Rate)</span>
-        <button id="close-rate-modal-btn" type="button" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <span class="text-lg font-semibold text-[#111827]">自定义汇率 (Custom Rate)</span>
+        <button id="close-rate-modal-btn" type="button" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
           <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
           </svg>
         </button>
       </div>
-      <div class="p-5 space-y-3.5">
-        <p class="text-xs text-gray-500">
+      <div class="p-5 space-y-4">
+        <p class="text-sm text-gray-500">
           以当前第一币种 (<span id="rate-modal-base-code" class="font-semibold text-[#111827]">EUR</span>) 为基准手动设置汇率，或点击右上角 <span class="text-[#1d63ed] font-medium">Refresh</span> 恢复在线实时汇率。
         </p>
 
         <!-- 第二币种汇率输入 -->
-        <div class="space-y-1">
-          <label for="custom-rate-second-input" class="block text-xs font-medium text-gray-700">
+        <div class="space-y-1.5">
+          <label for="custom-rate-second-input" class="block text-sm font-medium text-gray-700">
             1 <span class="rate-modal-base-label font-semibold">EUR</span> = ? <span id="rate-modal-second-label" class="font-semibold text-[#1d63ed]">USD</span>
           </label>
           <div class="relative flex items-center">
@@ -438,15 +451,15 @@
               step="any"
               min="0.000001"
               inputmode="decimal"
-              class="w-full px-3.5 py-2 text-sm font-semibold text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all tabular-nums"
+              class="w-full px-3.5 py-2.5 text-base font-semibold text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all tabular-nums"
             />
-            <span id="rate-modal-second-code" class="absolute right-3.5 text-xs font-medium text-gray-400">USD</span>
+            <span id="rate-modal-second-code" class="absolute right-3.5 text-sm font-medium text-gray-400">USD</span>
           </div>
         </div>
 
         <!-- 第三币种汇率输入 -->
-        <div class="space-y-1">
-          <label for="custom-rate-third-input" class="block text-xs font-medium text-gray-700">
+        <div class="space-y-1.5">
+          <label for="custom-rate-third-input" class="block text-sm font-medium text-gray-700">
             1 <span class="rate-modal-base-label font-semibold">EUR</span> = ? <span id="rate-modal-third-label" class="font-semibold text-[#1d63ed]">CNY</span>
           </label>
           <div class="relative flex items-center">
@@ -456,9 +469,9 @@
               step="any"
               min="0.000001"
               inputmode="decimal"
-              class="w-full px-3.5 py-2 text-sm font-semibold text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all tabular-nums"
+              class="w-full px-3.5 py-2.5 text-base font-semibold text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all tabular-nums"
             />
-            <span id="rate-modal-third-code" class="absolute right-3.5 text-xs font-medium text-gray-400">CNY</span>
+            <span id="rate-modal-third-code" class="absolute right-3.5 text-sm font-medium text-gray-400">CNY</span>
           </div>
         </div>
 
@@ -466,7 +479,7 @@
           <button
             id="rate-modal-online-btn"
             type="button"
-            class="px-3 py-2 text-xs font-medium text-[#1d63ed] bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+            class="px-3.5 py-2.5 text-sm font-medium text-[#1d63ed] bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
           >
             在线获取最新
           </button>
@@ -474,14 +487,14 @@
             <button
               id="cancel-rate-btn"
               type="button"
-              class="px-3.5 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+              class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
             >
               取消
             </button>
             <button
               id="confirm-rate-btn"
               type="button"
-              class="px-4 py-2 text-xs font-medium text-white bg-[#1d63ed] hover:bg-blue-700 rounded-xl transition-colors"
+              class="px-4 py-2.5 text-sm font-medium text-white bg-[#1d63ed] hover:bg-blue-700 rounded-xl transition-colors"
             >
               应用汇率
             </button>
@@ -494,36 +507,36 @@
   <!-- 保存报价备注弹窗 Modal -->
   <div id="save-remark-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-        <span class="text-base font-semibold text-[#111827]">保存报价 (Save Quotation)</span>
-        <button id="close-save-modal-btn" type="button" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <span class="text-lg font-semibold text-[#111827]">保存报价 (Save Quotation)</span>
+        <button id="close-save-modal-btn" type="button" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
           <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
           </svg>
         </button>
       </div>
-      <div class="p-5 space-y-3">
-        <label for="save-remark-input" class="block text-xs font-medium text-gray-600">
+      <div class="p-5 space-y-3.5">
+        <label for="save-remark-input" class="block text-sm font-medium text-gray-600">
           请输入备注信息（如客户名称、项目型号或物料编号）
         </label>
         <input
           id="save-remark-input"
           type="text"
           placeholder="例如：XX客户 - 型号A 报价..."
-          class="w-full px-3.5 py-2.5 text-sm text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all"
+          class="w-full px-3.5 py-2.5 text-base text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all"
         />
         <div class="flex items-center justify-end gap-2 pt-2">
           <button
             id="cancel-save-btn"
             type="button"
-            class="px-4 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+            class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
           >
             取消
           </button>
           <button
             id="confirm-save-btn"
             type="button"
-            class="px-4 py-2 text-xs font-medium text-white bg-[#1d63ed] hover:bg-blue-700 rounded-xl transition-colors"
+            class="px-4 py-2.5 text-sm font-medium text-white bg-[#1d63ed] hover:bg-blue-700 rounded-xl transition-colors"
           >
             确认保存
           </button>
@@ -534,14 +547,14 @@
 
   <!-- 历史报价弹窗 Modal -->
   <div id="history-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-3 sm:p-5">
-    <div class="bg-white w-full max-w-lg max-h-[82dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100">
-      <div class="px-4 sm:px-5 py-3.5 border-b border-gray-100 flex items-center justify-between shrink-0">
+    <div class="bg-white w-full max-w-lg max-h-[85dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100">
+      <div class="px-4 sm:px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2">
-          <span class="text-base font-semibold text-[#111827]">Quotation History</span>
-          <span id="history-modal-count" class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-[#1d63ed] font-medium">0</span>
+          <span class="text-lg font-semibold text-[#111827]">Quotation History</span>
+          <span id="history-modal-count" class="text-sm px-2.5 py-0.5 rounded-full bg-blue-50 text-[#1d63ed] font-semibold">0</span>
         </div>
         <div class="flex items-center gap-2">
-          <button id="clear-history-btn" type="button" class="text-xs text-red-500 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+          <button id="clear-history-btn" type="button" class="text-sm text-red-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
             Clear All
           </button>
           <button id="close-history-btn" type="button" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
@@ -551,13 +564,50 @@
           </button>
         </div>
       </div>
-      <div id="history-list" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5">
+      <div id="history-list" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
         <!-- 历史记录列表由 JS 动态填充 -->
       </div>
     </div>
   </div>
 
   <script>
+    // =========================================================================
+    // 0. PWA Service Worker 注册与桌面安装提示
+    // =========================================================================
+    let deferredInstallPrompt = null;
+    const installPwaBtn = document.getElementById('install-pwa-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (installPwaBtn) {
+        installPwaBtn.classList.remove('hidden');
+      }
+    });
+
+    if (installPwaBtn) {
+      installPwaBtn.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installPwaBtn.classList.add('hidden');
+        }
+        deferredInstallPrompt = null;
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      if (installPwaBtn) installPwaBtn.classList.add('hidden');
+      deferredInstallPrompt = null;
+    });
+
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
     // =========================================================================
     // 1. 全球币种库与状态初始化 (Global Currencies & State)
     // =========================================================================
@@ -1748,23 +1798,23 @@
         const savedVatPercent = typeof item.vatPercent === 'number' ? item.vatPercent : 13;
 
         return `
-          <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 hover:bg-blue-50/30 transition-colors">
+          <div class="border border-gray-200 rounded-xl p-3.5 bg-gray-50/60 hover:bg-blue-50/30 transition-colors">
             <div class="flex items-center justify-between gap-2 pb-2 border-b border-gray-100">
-              <div class="text-xs text-gray-500 min-w-0">
-                <span class="font-medium text-gray-700">${item.savedAt}</span>
+              <div class="text-sm text-gray-500 min-w-0">
+                <span class="font-semibold text-gray-700">${item.savedAt}</span>
               </div>
-              <div class="flex items-center gap-1.5 shrink-0">
+              <div class="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   data-load-id="${item.id}"
-                  class="px-2.5 py-1 text-xs font-medium text-[#1d63ed] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                  class="px-3 py-1.5 text-sm font-semibold text-[#1d63ed] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                 >
                   Load
                 </button>
                 <button
                   type="button"
                   data-del-id="${item.id}"
-                  class="px-2 py-1 text-xs font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  class="px-2.5 py-1.5 text-sm font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   Del
                 </button>
@@ -1772,22 +1822,22 @@
             </div>
             ${remarkBadge}
             ${ratesBadge}
-            <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
-              <div class="bg-white rounded-lg p-2 border border-gray-100">
-                <div class="text-[11px] font-semibold text-gray-400 uppercase mb-1">Cost</div>
+            <div class="grid grid-cols-2 gap-2.5 pt-2.5 text-sm">
+              <div class="bg-white rounded-lg p-2.5 border border-gray-100">
+                <div class="text-xs font-bold text-gray-400 uppercase mb-1">Cost</div>
                 <div class="flex justify-between tabular-nums"><span>${c1.flag} ${c1.code}</span><span class="font-medium text-gray-800">${c1.symbol}${formatNumber(item.values.eurDisti)}</span></div>
-                <div class="flex justify-between tabular-nums mt-0.5"><span>${c2.flag} ${c2.code}</span><span class="font-medium text-gray-800">${c2.symbol}${formatNumber(item.values.usdDisti)}</span></div>
-                <div class="flex justify-between tabular-nums mt-0.5"><span>${c3.flag} ${c3.code}</span><span class="font-medium text-gray-800">${c3.symbol}${formatNumber(item.values.cnyDisti)}</span></div>
+                <div class="flex justify-between tabular-nums mt-1"><span>${c2.flag} ${c2.code}</span><span class="font-medium text-gray-800">${c2.symbol}${formatNumber(item.values.usdDisti)}</span></div>
+                <div class="flex justify-between tabular-nums mt-1"><span>${c3.flag} ${c3.code}</span><span class="font-medium text-gray-800">${c3.symbol}${formatNumber(item.values.cnyDisti)}</span></div>
               </div>
-              <div class="bg-white rounded-lg p-2 border border-gray-100">
-                <div class="flex items-center justify-between text-[11px] font-semibold text-gray-400 uppercase mb-1">
+              <div class="bg-white rounded-lg p-2.5 border border-gray-100">
+                <div class="flex items-center justify-between text-xs font-bold text-gray-400 uppercase mb-1">
                   <span>Resale</span>
                   <span class="text-[#1d63ed]">Margin ${item.marginPercent}%</span>
                 </div>
                 <div class="flex justify-between tabular-nums"><span>${c1.flag} ${c1.code}</span><span class="font-medium text-gray-800">${c1.symbol}${formatNumber(item.values.eurResale)}</span></div>
-                <div class="flex justify-between tabular-nums mt-0.5"><span>${c2.flag} ${c2.code}</span><span class="font-medium text-gray-800">${c2.symbol}${formatNumber(item.values.usdResale)}</span></div>
-                <div class="flex justify-between tabular-nums mt-0.5"><span>${c3.flag} ${c3.code}</span><span class="font-medium text-gray-800">${c3.symbol}${formatNumber(item.values.cnyResale)}</span></div>
-                <div class="flex justify-between tabular-nums mt-0.5 pt-0.5 border-t border-gray-50"><span>${c3.flag} ${c3.code} (${savedVatPercent}% VAT)</span><span class="font-semibold text-[#1d63ed]">${c3.symbol}${formatNumber(item.values.cnyResaleVat)}</span></div>
+                <div class="flex justify-between tabular-nums mt-1"><span>${c2.flag} ${c2.code}</span><span class="font-medium text-gray-800">${c2.symbol}${formatNumber(item.values.usdResale)}</span></div>
+                <div class="flex justify-between tabular-nums mt-1"><span>${c3.flag} ${c3.code}</span><span class="font-medium text-gray-800">${c3.symbol}${formatNumber(item.values.cnyResale)}</span></div>
+                <div class="flex justify-between tabular-nums mt-1 pt-1 border-t border-gray-50"><span>${c3.flag} ${c3.code} (${savedVatPercent}% VAT)</span><span class="font-semibold text-[#1d63ed]">${c3.symbol}${formatNumber(item.values.cnyResaleVat)}</span></div>
               </div>
             </div>
           </div>
@@ -1913,7 +1963,7 @@
       }
     });
 
-    // 初始化默认渲染（Disti Margin 默认值为 10%，主币种成本默认 1.000，并第一时间自动请求最新汇率）
+    // 初始化默认渲染（Margin 默认值为 10%，主币种成本默认 1.000，并第一时间自动请求最新汇率）
     loadQuotationHistory();
     state.marginPercent = 10;
     state.marginRawInput = '10';
