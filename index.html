@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Quick Quotation" />
+  <title>Quick Quotation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    /* 使用动态视口宽高 (100vw × 100dvh) 并支持安全区域内边距，实现真正的全屏无缝贴合 */
+    .app-viewport {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    /* 自定义滚动条隐藏 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* 自定义下拉框箭头隐藏 */
+    select.custom-select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    /* 数字键盘按压动效 */
+    .keypad-btn:active {
+      background-color: #f3f4f6;
+      transform: scale(0.99);
+    }
+    .keypad-btn-clear:active {
+      background-color: #dc2626;
+      transform: scale(0.99);
+    }
+    /* 自适应弹性输入框与键盘单元格：随视口高度自动伸缩 */
+    .calc-field, .margin-box {
+      height: clamp(28px, 4.3dvh, 52px);
+    }
+    .keypad-cell {
+      height: clamp(38px, 6.4dvh, 76px);
+    }
+  </style>
+</head>
+<body class="bg-[#f3f5f8] app-viewport flex flex-col text-[#333333] overflow-hidden">
+
+  <!-- 全屏主容器：100% 占满屏幕宽高，各个独立卡片与键盘处于同一层级 -->
+  <div class="w-full h-full flex-1 flex flex-col justify-between p-2 sm:p-3 lg:p-4 gap-2 sm:gap-2.5 overflow-hidden">
+    
+    <!-- 1. 顶部标题与汇率栏卡片 -->
+    <header class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5 shrink-0 flex flex-col gap-1.5">
+      <h1 class="text-center text-[clamp(17px,3.2vw,22px)] font-bold text-[#1d63ed] tracking-tight leading-tight">
+        Quick Quotation
+      </h1>
+      <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+        <div id="rate-display" class="text-[clamp(11px,2.1vw,15px)] text-[#555555] leading-snug min-w-0 flex flex-col">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <div
+              id="active-rates-text"
+              title="点击自定义修改汇率"
+              class="cursor-pointer rounded-lg px-1.5 py-0.5 -ml-1.5 hover:bg-blue-50/80 transition-colors inline-flex items-center gap-1.5 flex-wrap"
+            >
+              <span>1 <span class="font-medium text-[#333333]">EUR</span> = <span class="font-bold text-[#1d63ed]">1.080</span> USD · 1 <span class="font-medium text-[#333333]">EUR</span> = <span class="font-bold text-[#1d63ed]">7.300</span> CNY</span>
+            </div>
+            <button
+              id="edit-rate-btn"
+              type="button"
+              title="自定义汇率"
+              class="text-[11px] text-[#1d63ed] hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition-colors inline-flex items-center gap-0.5 shrink-0"
+            >
+              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+              </svg>
+              <span>Edit</span>
+            </button>
+          </div>
+          <div id="rate-date" class="text-[clamp(10px,1.8vw,13px)] text-[#888888] mt-0.5">2026-11-24 00:00:00</div>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+          <button 
+            id="refresh-btn"
+            type="button"
+            class="px-2.5 sm:px-3.5 py-1 text-[clamp(12px,2vw,14px)] font-medium text-[#1d63ed] border border-[#1d63ed] rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors shrink-0 flex items-center gap-1"
+          >
+            <span id="refresh-text">Refresh</span>
+          </button>
+          <button 
+            id="save-btn"
+            type="button"
+            class="px-2.5 sm:px-3.5 py-1 text-[clamp(12px,2vw,14px)] font-medium text-white bg-[#1d63ed] border border-[#1d63ed] rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shrink-0 flex items-center gap-1"
+          >
+            <span>Save</span>
+          </button>
+          <button 
+            id="history-btn"
+            type="button"
+            class="px-2.5 sm:px-3.5 py-1 text-[clamp(12px,2vw,14px)] font-medium text-[#374151] bg-[#f3f4f6] border border-[#d1d5db] rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors shrink-0 flex items-center gap-1"
+          >
+            <span>History</span>
+            <span id="history-badge" class="hidden text-[11px] px-1.5 py-0.2 bg-[#1d63ed] text-white rounded-full font-semibold">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. 独立 COST 卡片（与键盘卡片同级） -->
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col justify-between gap-1.5 sm:gap-2 flex-[3] min-h-0">
+      <div class="flex items-center justify-between px-0.5 shrink-0">
+        <span class="text-[clamp(12px,2vw,14px)] font-semibold text-[#1d63ed] uppercase tracking-wider">Cost</span>
+      </div>
+
+      <!-- 1. 主币种 Cost -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <div class="relative w-[42%] sm:w-[38%] shrink-0" id="base-currency-combobox">
+          <button
+            id="currency-trigger"
+            type="button"
+            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3 py-1.5 text-[clamp(13px,2.2vw,17px)] font-medium transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="flex items-center gap-1.5 truncate">
+              <span id="selected-flag" class="text-[clamp(15px,2.4vw,19px)] leading-none shrink-0">🇪🇺</span>
+              <span id="selected-label" class="truncate">EUR (€)</span>
+            </span>
+            <svg class="w-4 h-4 text-[#4b5563] shrink-0 transition-transform duration-150" id="currency-chevron" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <ul
+            id="currency-menu"
+            role="listbox"
+            class="hidden absolute left-0 top-full mt-1.5 w-60 sm:w-64 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+          ></ul>
+        </div>
+
+        <div 
+          data-field="eurDisti"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-eurDisti" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">€</span>
+          <span id="val-eurDisti" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">1.000</span>
+        </div>
+      </div>
+
+      <!-- 2. 第二币种 Cost -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <div class="relative w-[42%] sm:w-[38%] shrink-0" id="second-currency-combobox">
+          <button
+            id="second-currency-trigger"
+            type="button"
+            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3 py-1.5 text-[clamp(13px,2.2vw,17px)] font-medium transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="flex items-center gap-1.5 truncate">
+              <span id="second-selected-flag" class="text-[clamp(15px,2.4vw,19px)] leading-none shrink-0">🇺🇸</span>
+              <span id="second-selected-label" class="truncate">USD ($)</span>
+            </span>
+            <svg class="w-4 h-4 text-[#4b5563] shrink-0 transition-transform duration-150" id="second-currency-chevron" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <ul
+            id="second-currency-menu"
+            role="listbox"
+            class="hidden absolute left-0 top-full mt-1.5 w-60 sm:w-64 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+          ></ul>
+        </div>
+
+        <div 
+          data-field="usdDisti"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-usdDisti" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">$</span>
+          <span id="val-usdDisti" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+        </div>
+      </div>
+
+      <!-- 3. 第三币种 Cost -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <div class="relative w-[42%] sm:w-[38%] shrink-0" id="third-currency-combobox">
+          <button
+            id="third-currency-trigger"
+            type="button"
+            class="w-full flex items-center justify-between gap-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] active:bg-[#d1d5db] text-[#111827] rounded-xl px-2.5 sm:px-3 py-1.5 text-[clamp(13px,2.2vw,17px)] font-medium transition-colors border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#1d63ed]"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="flex items-center gap-1.5 truncate">
+              <span id="third-selected-flag" class="text-[clamp(15px,2.4vw,19px)] leading-none shrink-0">🇨🇳</span>
+              <span id="third-selected-label" class="truncate">CNY (¥)</span>
+            </span>
+            <svg class="w-4 h-4 text-[#4b5563] shrink-0 transition-transform duration-150" id="third-currency-chevron" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <ul
+            id="third-currency-menu"
+            role="listbox"
+            class="hidden absolute left-0 top-full mt-1.5 w-60 sm:w-64 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+          ></ul>
+        </div>
+
+        <div 
+          data-field="cnyDisti"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-cnyDisti" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">¥</span>
+          <span id="val-cnyDisti" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 独立 Margin (%) 卡片（支持预设下拉选择 + 自定义数字键盘/物理键盘输入） -->
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 shrink-0">
+      <label class="text-[clamp(13px,2.2vw,17px)] font-medium text-[#333333] w-[42%] sm:w-[38%] shrink-0">
+        Margin(%)
+      </label>
+      <div class="margin-box relative flex-1 min-w-0" id="margin-combobox">
+        <div
+          id="margin-field-box"
+          class="w-full h-full bg-[#e5e7eb] text-[#111827] font-medium text-[clamp(14px,2.4vw,18px)] rounded-xl flex items-center justify-end border border-transparent transition-all cursor-pointer"
+        >
+          <div id="margin-input-area" class="flex-1 h-full flex items-center justify-end pr-1.5 pl-3 select-none">
+            <span id="val-margin" class="tabular-nums">10</span>
+            <span class="ml-0.5 text-[#374151]">%</span>
+          </div>
+          <button
+            id="margin-dropdown-btn"
+            type="button"
+            aria-label="选择预设毛利率"
+            class="h-full px-2.5 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-xl transition-colors"
+          >
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- 预设毛利率下拉菜单 -->
+        <ul
+          id="margin-menu"
+          role="listbox"
+          class="hidden absolute right-0 top-full mt-1.5 w-36 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-40 text-[clamp(13px,2.1vw,15px)]"
+        >
+          <li data-margin="0" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
+          <li data-margin="5" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">5%</li>
+          <li data-margin="8" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">8%</li>
+          <li data-margin="10" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">10%</li>
+          <li data-margin="12" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">12%</li>
+          <li data-margin="15" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">15%</li>
+          <li data-margin="18" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">18%</li>
+          <li data-margin="20" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
+          <li data-margin="25" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">25%</li>
+          <li data-margin="30" class="margin-option px-3.5 py-1.5 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">30%</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 4. 独立 RESALE 卡片（与键盘卡片同级） -->
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col justify-between gap-1.5 sm:gap-2 flex-[4] min-h-0">
+      <div class="flex items-center justify-between px-0.5 shrink-0">
+        <span class="text-[clamp(12px,2vw,14px)] font-semibold text-[#1d63ed] uppercase tracking-wider">Resale</span>
+      </div>
+
+      <!-- 5. 主币种 Resale -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <label id="label-eur-resale" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
+          <span id="resale-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none">🇪🇺</span>
+          <span id="resale-label-text" class="truncate">EUR (€)</span>
+        </label>
+        <div 
+          data-field="eurResale"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-eurResale" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">€</span>
+          <span id="val-eurResale" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+        </div>
+      </div>
+
+      <!-- 6. 第二币种 Resale -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <label id="label-usd-resale" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
+          <span id="second-resale-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none">🇺🇸</span>
+          <span id="second-resale-label-text" class="truncate">USD ($)</span>
+        </label>
+        <div 
+          data-field="usdResale"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-usdResale" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">$</span>
+          <span id="val-usdResale" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+        </div>
+      </div>
+
+      <!-- 7. 第三币种 Resale -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <label id="label-cny-resale" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] shrink-0 flex items-center gap-1.5">
+          <span id="third-resale-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none">🇨🇳</span>
+          <span id="third-resale-label-text" class="truncate">CNY (¥)</span>
+        </label>
+        <div 
+          data-field="cnyResale"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-cnyResale" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">¥</span>
+          <span id="val-cnyResale" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+        </div>
+      </div>
+
+      <!-- 8. 第三币种 自定义 VAT -->
+      <div class="flex items-center justify-between gap-3 sm:gap-4">
+        <div id="label-cny-vat" class="text-[clamp(13px,2.2vw,17px)] font-normal text-[#333333] w-[42%] sm:w-[38%] leading-tight shrink-0 flex items-center gap-1.5 flex-wrap">
+          <span id="third-vat-flag" class="text-[clamp(14px,2.3vw,18px)] leading-none shrink-0">🇨🇳</span>
+          <span id="third-vat-label-text" class="leading-tight">CNY (¥)</span>
+          <div class="relative inline-flex items-center" id="vat-combobox">
+            <div
+              id="vat-field-box"
+              title="点击自定义 VAT 税率"
+              class="inline-flex items-center bg-[#e5e7eb] hover:bg-gray-300/80 text-[#111827] font-medium text-[clamp(12px,2vw,15px)] rounded-lg border border-transparent transition-all cursor-pointer"
+            >
+              <div id="vat-input-area" class="flex items-center pl-2 pr-1 py-0.5 select-none">
+                <span id="val-vat" class="tabular-nums">13</span>
+                <span class="ml-0.5 text-[#374151]">%</span>
+              </div>
+              <button
+                id="vat-dropdown-btn"
+                type="button"
+                aria-label="选择预设 VAT 税率"
+                class="px-1 py-0.5 flex items-center justify-center text-[#111827] hover:bg-black/5 rounded-r-lg transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <span class="ml-1 text-[#333333]">VAT</span>
+
+            <!-- 预设 VAT 税率下拉菜单 -->
+            <ul
+              id="vat-menu"
+              role="listbox"
+              class="hidden absolute left-0 bottom-full mb-1.5 w-28 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl py-1 z-40 text-[clamp(12px,2vw,14px)]"
+            >
+              <li data-vat="0" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">0%</li>
+              <li data-vat="6" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">6%</li>
+              <li data-vat="9" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">9%</li>
+              <li data-vat="13" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#1d63ed] font-semibold bg-blue-50/70">13%</li>
+              <li data-vat="16" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">16%</li>
+              <li data-vat="17" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">17%</li>
+              <li data-vat="20" class="vat-option px-3 py-1 text-right cursor-pointer hover:bg-blue-50 text-[#333333]">20%</li>
+            </ul>
+          </div>
+        </div>
+        <div 
+          data-field="cnyResaleVat"
+          class="calc-field flex-1 bg-white border border-[#e5e7eb] rounded-xl px-3 sm:px-4 flex items-center justify-between gap-2 cursor-pointer transition-all min-w-0"
+        >
+          <span id="sym-cnyResaleVat" class="text-[clamp(14px,2.3vw,18px)] text-[#9ca3af] font-medium shrink-0">¥</span>
+          <span id="val-cnyResaleVat" class="text-[clamp(15px,2.6vw,20px)] text-[#b0b5bd] font-normal tabular-nums truncate">0.000</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 底部自适应自定义数字键盘：与 COST、RESALE 卡片同级 -->
+    <section class="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden grid grid-cols-3 border border-gray-100 shrink-0 w-full">
+      <button type="button" data-key="1" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">1</button>
+      <button type="button" data-key="2" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">2</button>
+      <button type="button" data-key="3" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">3</button>
+      
+      <button type="button" data-key="4" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">4</button>
+      <button type="button" data-key="5" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">5</button>
+      <button type="button" data-key="6" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">6</button>
+      
+      <button type="button" data-key="7" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">7</button>
+      <button type="button" data-key="8" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-b border-gray-100 flex items-center justify-center transition-all">8</button>
+      <button type="button" data-key="9" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-b border-gray-100 flex items-center justify-center transition-all">9</button>
+      
+      <button type="button" data-key="0" class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-gray-100 flex items-center justify-center transition-all">0</button>
+      <button type="button" data-key="." class="keypad-btn keypad-cell text-[clamp(20px,3.6vw,30px)] font-normal text-[#1d63ed] border-r border-gray-100 flex items-center justify-center transition-all">.</button>
+      <button type="button" data-key="C" class="keypad-btn-clear keypad-cell text-[clamp(20px,3.6vw,30px)] font-medium bg-[#ef3b3b] text-white flex items-center justify-center transition-all">C</button>
+    </section>
+
+  </div>
+
+  <!-- 轻量级提示 Toast -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-800/90 text-white text-xs px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
+    汇率已更新
+  </div>
+
+  <!-- 自定义汇率弹窗 Modal -->
+  <div id="custom-rate-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+        <span class="text-base font-semibold text-[#111827]">自定义汇率 (Custom Rate)</span>
+        <button id="close-rate-modal-btn" type="button" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-5 space-y-3.5">
+        <p class="text-xs text-gray-500">
+          以当前第一币种 (<span id="rate-modal-base-code" class="font-semibold text-[#111827]">EUR</span>) 为基准手动设置汇率，或点击右上角 <span class="text-[#1d63ed] font-medium">Refresh</span> 恢复在线实时汇率。
+        </p>
+
+        <!-- 第二币种汇率输入 -->
+        <div class="space-y-1">
+          <label for="custom-rate-second-input" class="block text-xs font-medium text-gray-700">
+            1 <span class="rate-modal-base-label font-semibold">EUR</span> = ? <span id="rate-modal-second-label" class="font-semibold text-[#1d63ed]">USD</span>
+          </label>
+          <div class="relative flex items-center">
+            <input
+              id="custom-rate-second-input"
+              type="number"
+              step="any"
+              min="0.000001"
+              inputmode="decimal"
+              class="w-full px-3.5 py-2 text-sm font-semibold text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all tabular-nums"
+            />
+            <span id="rate-modal-second-code" class="absolute right-3.5 text-xs font-medium text-gray-400">USD</span>
+          </div>
+        </div>
+
+        <!-- 第三币种汇率输入 -->
+        <div class="space-y-1">
+          <label for="custom-rate-third-input" class="block text-xs font-medium text-gray-700">
+            1 <span class="rate-modal-base-label font-semibold">EUR</span> = ? <span id="rate-modal-third-label" class="font-semibold text-[#1d63ed]">CNY</span>
+          </label>
+          <div class="relative flex items-center">
+            <input
+              id="custom-rate-third-input"
+              type="number"
+              step="any"
+              min="0.000001"
+              inputmode="decimal"
+              class="w-full px-3.5 py-2 text-sm font-semibold text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all tabular-nums"
+            />
+            <span id="rate-modal-third-code" class="absolute right-3.5 text-xs font-medium text-gray-400">CNY</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-2">
+          <button
+            id="rate-modal-online-btn"
+            type="button"
+            class="px-3 py-2 text-xs font-medium text-[#1d63ed] bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+          >
+            在线获取最新
+          </button>
+          <div class="flex items-center gap-2">
+            <button
+              id="cancel-rate-btn"
+              type="button"
+              class="px-3.5 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+            >
+              取消
+            </button>
+            <button
+              id="confirm-rate-btn"
+              type="button"
+              class="px-4 py-2 text-xs font-medium text-white bg-[#1d63ed] hover:bg-blue-700 rounded-xl transition-colors"
+            >
+              应用汇率
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 保存报价备注弹窗 Modal -->
+  <div id="save-remark-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+        <span class="text-base font-semibold text-[#111827]">保存报价 (Save Quotation)</span>
+        <button id="close-save-modal-btn" type="button" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-5 space-y-3">
+        <label for="save-remark-input" class="block text-xs font-medium text-gray-600">
+          请输入备注信息（如客户名称、项目型号或物料编号）
+        </label>
+        <input
+          id="save-remark-input"
+          type="text"
+          placeholder="例如：XX客户 - 型号A 报价..."
+          class="w-full px-3.5 py-2.5 text-sm text-[#111827] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#1d63ed] focus:ring-2 focus:ring-blue-100 transition-all"
+        />
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button
+            id="cancel-save-btn"
+            type="button"
+            class="px-4 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+          >
+            取消
+          </button>
+          <button
+            id="confirm-save-btn"
+            type="button"
+            class="px-4 py-2 text-xs font-medium text-white bg-[#1d63ed] hover:bg-blue-700 rounded-xl transition-colors"
+          >
+            确认保存
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 历史报价弹窗 Modal -->
+  <div id="history-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white w-full max-w-lg max-h-[82dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100">
+      <div class="px-4 sm:px-5 py-3.5 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-base font-semibold text-[#111827]">Quotation History</span>
+          <span id="history-modal-count" class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-[#1d63ed] font-medium">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="clear-history-btn" type="button" class="text-xs text-red-500 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+            Clear All
+          </button>
+          <button id="close-history-btn" type="button" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close">
+            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="history-list" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5">
+        <!-- 历史记录列表由 JS 动态填充 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 全球币种库与状态初始化 (Global Currencies & State)
+    // =========================================================================
+    const TOP_10_CODES = ['EUR', 'USD', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'HKD', 'SGD', 'KRW'];
+
+    const CURRENCIES = {
+      EUR: { code: 'EUR', symbol: '€', flag: '🇪🇺', name: 'Euro', rateFromEur: 1.0 },
+      USD: { code: 'USD', symbol: '$', flag: '🇺🇸', name: 'US Dollar', rateFromEur: 1.08 },
+      GBP: { code: 'GBP', symbol: '£', flag: '🇬🇧', name: 'British Pound', rateFromEur: 0.855 },
+      JPY: { code: 'JPY', symbol: '¥', flag: '🇯🇵', name: 'Japanese Yen', rateFromEur: 163.5 },
+      CHF: { code: 'CHF', symbol: 'Fr.', flag: '🇨🇭', name: 'Swiss Franc', rateFromEur: 0.945 },
+      AUD: { code: 'AUD', symbol: 'A$', flag: '🇦🇺', name: 'Australian Dollar', rateFromEur: 1.65 },
+      CAD: { code: 'CAD', symbol: 'C$', flag: '🇨🇦', name: 'Canadian Dollar', rateFromEur: 1.48 },
+      HKD: { code: 'HKD', symbol: 'HK$', flag: '🇭🇰', name: 'Hong Kong Dollar', rateFromEur: 8.42 },
+      SGD: { code: 'SGD', symbol: 'S$', flag: '🇸🇬', name: 'Singapore Dollar', rateFromEur: 1.45 },
+      KRW: { code: 'KRW', symbol: '₩', flag: '🇰🇷', name: 'South Korean Won', rateFromEur: 1480.0 },
+      AED: { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: 'UAE Dirham', rateFromEur: 3.966 },
+      AFN: { code: 'AFN', symbol: '؋', flag: '🇦🇫', name: 'Afghan Afghani', rateFromEur: 76.5 },
+      ALL: { code: 'ALL', symbol: 'L', flag: '🇦🇱', name: 'Albanian Lek', rateFromEur: 100.2 },
+      AMD: { code: 'AMD', symbol: '֏', flag: '🇦🇲', name: 'Armenian Dram', rateFromEur: 418.0 },
+      ANG: { code: 'ANG', symbol: 'ƒ', flag: '🇨🇼', name: 'Neth. Antillean Guilder', rateFromEur: 1.93 },
+      AOA: { code: 'AOA', symbol: 'Kz', flag: '🇦🇴', name: 'Angolan Kwanza', rateFromEur: 985.0 },
+      ARS: { code: 'ARS', symbol: '$', flag: '🇦🇷', name: 'Argentine Peso', rateFromEur: 1050.0 },
+      AWG: { code: 'AWG', symbol: 'ƒ', flag: '🇦🇼', name: 'Aruban Florin', rateFromEur: 1.93 },
+      AZN: { code: 'AZN', symbol: '₼', flag: '🇦🇿', name: 'Azerbaijani Manat', rateFromEur: 1.836 },
+      BAM: { code: 'BAM', symbol: 'KM', flag: '🇧🇦', name: 'Bosnia-Herz. Mark', rateFromEur: 1.956 },
+      BBD: { code: 'BBD', symbol: '$', flag: '🇧🇧', name: 'Barbadian Dollar', rateFromEur: 2.16 },
+      BDT: { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: 'Bangladeshi Taka', rateFromEur: 129.0 },
+      BGN: { code: 'BGN', symbol: 'лв', flag: '🇧🇬', name: 'Bulgarian Lev', rateFromEur: 1.956 },
+      BHD: { code: 'BHD', symbol: '.د.ب', flag: '🇧🇭', name: 'Bahraini Dinar', rateFromEur: 0.406 },
+      BIF: { code: 'BIF', symbol: 'FBu', flag: '🇧🇮', name: 'Burundian Franc', rateFromEur: 3120.0 },
+      BMD: { code: 'BMD', symbol: '$', flag: '🇧🇲', name: 'Bermudian Dollar', rateFromEur: 1.08 },
+      BND: { code: 'BND', symbol: 'B$', flag: '🇧🇳', name: 'Brunei Dollar', rateFromEur: 1.45 },
+      BOB: { code: 'BOB', symbol: 'Bs.', flag: '🇧🇴', name: 'Bolivian Boliviano', rateFromEur: 7.46 },
+      BRL: { code: 'BRL', symbol: 'R$', flag: '🇧🇷', name: 'Brazilian Real', rateFromEur: 6.15 },
+      BSD: { code: 'BSD', symbol: '$', flag: '🇧🇸', name: 'Bahamian Dollar', rateFromEur: 1.08 },
+      BTN: { code: 'BTN', symbol: 'Nu.', flag: '🇧🇹', name: 'Bhutanese Ngultrum', rateFromEur: 90.8 },
+      BWP: { code: 'BWP', symbol: 'P', flag: '🇧🇼', name: 'Botswana Pula', rateFromEur: 14.6 },
+      BYN: { code: 'BYN', symbol: 'Br', flag: '🇧🇾', name: 'Belarusian Ruble', rateFromEur: 3.54 },
+      BZD: { code: 'BZD', symbol: 'BZ$', flag: '🇧🇿', name: 'Belize Dollar', rateFromEur: 2.16 },
+      CDF: { code: 'CDF', symbol: 'FC', flag: '🇨🇩', name: 'Congolese Franc', rateFromEur: 3060.0 },
+      CLP: { code: 'CLP', symbol: '$', flag: '🇨🇱', name: 'Chilean Peso', rateFromEur: 1020.0 },
+      CNY: { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: 'Chinese Yuan', rateFromEur: 7.3 },
+      COP: { code: 'COP', symbol: '$', flag: '🇨🇴', name: 'Colombian Peso', rateFromEur: 4580.0 },
+      CRC: { code: 'CRC', symbol: '₡', flag: '🇨🇷', name: 'Costa Rican Colón', rateFromEur: 552.0 },
+      CUP: { code: 'CUP', symbol: '$', flag: '🇨🇺', name: 'Cuban Peso', rateFromEur: 25.9 },
+      CVE: { code: 'CVE', symbol: '$', flag: '🇨🇻', name: 'Cape Verdean Escudo', rateFromEur: 110.27 },
+      CZK: { code: 'CZK', symbol: 'Kč', flag: '🇨🇿', name: 'Czech Koruna', rateFromEur: 25.2 },
+      DJF: { code: 'DJF', symbol: 'Fdj', flag: '🇩🇯', name: 'Djiboutian Franc', rateFromEur: 192.0 },
+      DKK: { code: 'DKK', symbol: 'kr', flag: '🇩🇰', name: 'Danish Krone', rateFromEur: 7.46 },
+      DOP: { code: 'DOP', symbol: 'RD$', flag: '🇩🇴', name: 'Dominican Peso', rateFromEur: 64.8 },
+      DZD: { code: 'DZD', symbol: 'د.ج', flag: '🇩🇿', name: 'Algerian Dinar', rateFromEur: 144.5 },
+      EGP: { code: 'EGP', symbol: 'E£', flag: '🇪🇬', name: 'Egyptian Pound', rateFromEur: 52.8 },
+      ERN: { code: 'ERN', symbol: 'Nfk', flag: '🇪🇷', name: 'Eritrean Nakfa', rateFromEur: 16.2 },
+      ETB: { code: 'ETB', symbol: 'Br', flag: '🇪🇹', name: 'Ethiopian Birr', rateFromEur: 132.0 },
+      FJD: { code: 'FJD', symbol: 'FJ$', flag: '🇫🇯', name: 'Fijian Dollar', rateFromEur: 2.42 },
+      GEL: { code: 'GEL', symbol: '₾', flag: '🇬🇪', name: 'Georgian Lari', rateFromEur: 2.94 },
+      GHS: { code: 'GHS', symbol: '₵', flag: '🇬🇭', name: 'Ghanaian Cedi', rateFromEur: 17.2 },
+      GIP: { code: 'GIP', symbol: '£', flag: '🇬🇮', name: 'Gibraltar Pound', rateFromEur: 0.855 },
+      GMD: { code: 'GMD', symbol: 'D', flag: '🇬🇲', name: 'Gambian Dalasi', rateFromEur: 75.5 },
+      GNF: { code: 'GNF', symbol: 'FG', flag: '🇬🇳', name: 'Guinean Franc', rateFromEur: 9320.0 },
+      GTQ: { code: 'GTQ', symbol: 'Q', flag: '🇬🇹', name: 'Guatemalan Quetzal', rateFromEur: 8.35 },
+      GYD: { code: 'GYD', symbol: '$', flag: '🇬🇾', name: 'Guyanese Dollar', rateFromEur: 226.0 },
+      HNL: { code: 'HNL', symbol: 'L', flag: '🇭🇳', name: 'Honduran Lempira', rateFromEur: 26.8 },
+      HTG: { code: 'HTG', symbol: 'G', flag: '🇭🇹', name: 'Haitian Gourde', rateFromEur: 142.0 },
+      HUF: { code: 'HUF', symbol: 'Ft', flag: '🇭🇺', name: 'Hungarian Forint', rateFromEur: 405.0 },
+      IDR: { code: 'IDR', symbol: 'Rp', flag: '🇮🇩', name: 'Indonesian Rupiah', rateFromEur: 16950.0 },
+      ILS: { code: 'ILS', symbol: '₪', flag: '🇮🇱', name: 'Israeli New Shekel', rateFromEur: 3.98 },
+      INR: { code: 'INR', symbol: '₹', flag: '🇮🇳', name: 'Indian Rupee', rateFromEur: 90.8 },
+      IQD: { code: 'IQD', symbol: 'ع.د', flag: '🇮🇶', name: 'Iraqi Dinar', rateFromEur: 1415.0 },
+      IRR: { code: 'IRR', symbol: '﷼', flag: '🇮🇷', name: 'Iranian Rial', rateFromEur: 45400.0 },
+      ISK: { code: 'ISK', symbol: 'kr', flag: '🇮🇸', name: 'Icelandic Króna', rateFromEur: 148.5 },
+      JMD: { code: 'JMD', symbol: 'J$', flag: '🇯🇲', name: 'Jamaican Dollar', rateFromEur: 169.5 },
+      JOD: { code: 'JOD', symbol: 'JD', flag: '🇯🇴', name: 'Jordanian Dinar', rateFromEur: 0.766 },
+      KES: { code: 'KES', symbol: 'KSh', flag: '🇰🇪', name: 'Kenyan Shilling', rateFromEur: 139.5 },
+      KGS: { code: 'KGS', symbol: 'с', flag: '🇰🇬', name: 'Kyrgyzstani Som', rateFromEur: 93.5 },
+      KHR: { code: 'KHR', symbol: '៛', flag: '🇰🇭', name: 'Cambodian Riel', rateFromEur: 4380.0 },
+      KMF: { code: 'KMF', symbol: 'CF', flag: '🇰🇲', name: 'Comorian Franc', rateFromEur: 491.97 },
+      KWD: { code: 'KWD', symbol: 'KD', flag: '🇰🇼', name: 'Kuwaiti Dinar', rateFromEur: 0.331 },
+      KYD: { code: 'KYD', symbol: '$', flag: '🇰🇾', name: 'Cayman Islands Dollar', rateFromEur: 0.89 },
+      KZT: { code: 'KZT', symbol: '₸', flag: '🇰🇿', name: 'Kazakhstani Tenge', rateFromEur: 528.0 },
+      LAK: { code: 'LAK', symbol: '₭', flag: '🇱🇦', name: 'Lao Kip', rateFromEur: 23650.0 },
+      LBP: { code: 'LBP', symbol: 'ل.ل', flag: '🇱🇧', name: 'Lebanese Pound', rateFromEur: 96600.0 },
+      LKR: { code: 'LKR', symbol: 'Rs', flag: '🇱🇰', name: 'Sri Lankan Rupee', rateFromEur: 318.0 },
+      LRD: { code: 'LRD', symbol: '$', flag: '🇱🇷', name: 'Liberian Dollar', rateFromEur: 208.0 },
+      LSL: { code: 'LSL', symbol: 'L', flag: '🇱🇸', name: 'Lesotho Loti', rateFromEur: 19.2 },
+      LYD: { code: 'LYD', symbol: 'LD', flag: '🇱🇾', name: 'Libyan Dinar', rateFromEur: 5.21 },
+      MAD: { code: 'MAD', symbol: 'MAD', flag: '🇲🇦', name: 'Moroccan Dirham', rateFromEur: 10.72 },
+      MDL: { code: 'MDL', symbol: 'L', flag: '🇲🇩', name: 'Moldovan Leu', rateFromEur: 19.15 },
+      MGA: { code: 'MGA', symbol: 'Ar', flag: '🇲🇬', name: 'Malagasy Ariary', rateFromEur: 4920.0 },
+      MKD: { code: 'MKD', symbol: 'ден', flag: '🇲🇰', name: 'Macedonian Denar', rateFromEur: 61.5 },
+      MMK: { code: 'MMK', symbol: 'K', flag: '🇲🇲', name: 'Myanmar Kyat', rateFromEur: 2268.0 },
+      MNT: { code: 'MNT', symbol: '₮', flag: '🇲🇳', name: 'Mongolian Tögrög', rateFromEur: 3680.0 },
+      MOP: { code: 'MOP', symbol: 'MOP$', flag: '🇲🇴', name: 'Macanese Pataca', rateFromEur: 8.67 },
+      MRU: { code: 'MRU', symbol: 'UM', flag: '🇲🇷', name: 'Mauritanian Ouguiya', rateFromEur: 42.9 },
+      MUR: { code: 'MUR', symbol: '₨', flag: '🇲🇺', name: 'Mauritian Rupee', rateFromEur: 49.8 },
+      MVR: { code: 'MVR', symbol: 'Rf', flag: '🇲🇻', name: 'Maldivian Rufiyaa', rateFromEur: 16.65 },
+      MWK: { code: 'MWK', symbol: 'MK', flag: '🇲🇼', name: 'Malawian Kwacha', rateFromEur: 1870.0 },
+      MXN: { code: 'MXN', symbol: '$', flag: '🇲🇽', name: 'Mexican Peso', rateFromEur: 21.6 },
+      MYR: { code: 'MYR', symbol: 'RM', flag: '🇲🇾', name: 'Malaysian Ringgit', rateFromEur: 4.78 },
+      MZN: { code: 'MZN', symbol: 'MT', flag: '🇲🇿', name: 'Mozambican Metical', rateFromEur: 69.0 },
+      NAD: { code: 'NAD', symbol: '$', flag: '🇳🇦', name: 'Namibian Dollar', rateFromEur: 19.2 },
+      NGN: { code: 'NGN', symbol: '₦', flag: '🇳🇬', name: 'Nigerian Naira', rateFromEur: 1760.0 },
+      NIO: { code: 'NIO', symbol: 'C$', flag: '🇳🇮', name: 'Nicaraguan Córdoba', rateFromEur: 39.7 },
+      NOK: { code: 'NOK', symbol: 'kr', flag: '🇳🇴', name: 'Norwegian Krone', rateFromEur: 11.75 },
+      NPR: { code: 'NPR', symbol: '₨', flag: '🇳🇵', name: 'Nepalese Rupee', rateFromEur: 145.3 },
+      NZD: { code: 'NZD', symbol: 'NZ$', flag: '🇳🇿', name: 'New Zealand Dollar', rateFromEur: 1.81 },
+      OMR: { code: 'OMR', symbol: '﷼', flag: '🇴🇲', name: 'Omani Rial', rateFromEur: 0.415 },
+      PAB: { code: 'PAB', symbol: 'B/.', flag: '🇵🇦', name: 'Panamanian Balboa', rateFromEur: 1.08 },
+      PEN: { code: 'PEN', symbol: 'S/', flag: '🇵🇪', name: 'Peruvian Sol', rateFromEur: 4.05 },
+      PGK: { code: 'PGK', symbol: 'K', flag: '🇵🇬', name: 'Papua New Guinean Kina', rateFromEur: 4.32 },
+      PHP: { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: 'Philippine Peso', rateFromEur: 62.8 },
+      PKR: { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: 'Pakistani Rupee', rateFromEur: 300.0 },
+      PLN: { code: 'PLN', symbol: 'zł', flag: '🇵🇱', name: 'Polish Złoty', rateFromEur: 4.32 },
+      PYG: { code: 'PYG', symbol: '₲', flag: '🇵🇾', name: 'Paraguayan Guaraní', rateFromEur: 8380.0 },
+      QAR: { code: 'QAR', symbol: '﷼', flag: '🇶🇦', name: 'Qatari Riyal', rateFromEur: 3.93 },
+      RON: { code: 'RON', symbol: 'lei', flag: '🇷🇴', name: 'Romanian Leu', rateFromEur: 4.975 },
+      RSD: { code: 'RSD', symbol: 'дин.', flag: '🇷🇸', name: 'Serbian Dinar', rateFromEur: 117.0 },
+      RUB: { code: 'RUB', symbol: '₽', flag: '🇷🇺', name: 'Russian Ruble', rateFromEur: 105.0 },
+      RWF: { code: 'RWF', symbol: 'FRw', flag: '🇷🇼', name: 'Rwandan Franc', rateFromEur: 1480.0 },
+      SAR: { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: 'Saudi Riyal', rateFromEur: 4.05 },
+      SBD: { code: 'SBD', symbol: '$', flag: '🇸🇧', name: 'Solomon Islands Dollar', rateFromEur: 9.15 },
+      SCR: { code: 'SCR', symbol: '₨', flag: '🇸🇨', name: 'Seychellois Rupee', rateFromEur: 14.8 },
+      SDG: { code: 'SDG', symbol: 'ج.س.', flag: '🇸🇩', name: 'Sudanese Pound', rateFromEur: 649.0 },
+      SEK: { code: 'SEK', symbol: 'kr', flag: '🇸🇪', name: 'Swedish Krona', rateFromEur: 11.45 },
+      SLL: { code: 'SLL', symbol: 'Le', flag: '🇸🇱', name: 'Sierra Leonean Leone', rateFromEur: 24400.0 },
+      SOS: { code: 'SOS', symbol: 'S', flag: '🇸🇴', name: 'Somali Shilling', rateFromEur: 616.0 },
+      SRD: { code: 'SRD', symbol: '$', flag: '🇸🇷', name: 'Surinamese Dollar', rateFromEur: 38.2 },
+      SSP: { code: 'SSP', symbol: '£', flag: '🇸🇸', name: 'South Sudanese Pound', rateFromEur: 1405.0 },
+      STN: { code: 'STN', symbol: 'Db', flag: '🇸🇹', name: 'São Tomé Dobra', rateFromEur: 24.5 },
+      SYP: { code: 'SYP', symbol: '£', flag: '🇸🇾', name: 'Syrian Pound', rateFromEur: 14040.0 },
+      SZL: { code: 'SZL', symbol: 'E', flag: '🇸🇿', name: 'Swazi Lilangeni', rateFromEur: 19.2 },
+      THB: { code: 'THB', symbol: '฿', flag: '🇹🇭', name: 'Thai Baht', rateFromEur: 37.2 },
+      TJS: { code: 'TJS', symbol: 'SM', flag: '🇹🇯', name: 'Tajikistani Somoni', rateFromEur: 11.5 },
+      TMT: { code: 'TMT', symbol: 'T', flag: '🇹🇲', name: 'Turkmenistani Manat', rateFromEur: 3.78 },
+      TND: { code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: 'Tunisian Dinar', rateFromEur: 3.38 },
+      TOP: { code: 'TOP', symbol: 'T$', flag: '🇹🇴', name: 'Tongan Paʻanga', rateFromEur: 2.55 },
+      TRY: { code: 'TRY', symbol: '₺', flag: '🇹🇷', name: 'Turkish Lira', rateFromEur: 37.1 },
+      TTD: { code: 'TTD', symbol: 'TT$', flag: '🇹🇹', name: 'Trinidad & Tobago Dollar', rateFromEur: 7.32 },
+      TWD: { code: 'TWD', symbol: 'NT$', flag: '🇹🇼', name: 'New Taiwan Dollar', rateFromEur: 34.8 },
+      TZS: { code: 'TZS', symbol: 'TSh', flag: '🇹🇿', name: 'Tanzanian Shilling', rateFromEur: 2890.0 },
+      UAH: { code: 'UAH', symbol: '₴', flag: '🇺🇦', name: 'Ukrainian Hryvnia', rateFromEur: 44.6 },
+      UGX: { code: 'UGX', symbol: 'USh', flag: '🇺🇬', name: 'Ugandan Shilling', rateFromEur: 3980.0 },
+      UYU: { code: 'UYU', symbol: '$U', flag: '🇺🇾', name: 'Uruguayan Peso', rateFromEur: 45.2 },
+      UZS: { code: 'UZS', symbol: "so'm", flag: '🇺🇿', name: 'Uzbekistani Som', rateFromEur: 13850.0 },
+      VES: { code: 'VES', symbol: 'Bs.S', flag: '🇻🇪', name: 'Venezuelan Bolívar', rateFromEur: 48.5 },
+      VND: { code: 'VND', symbol: '₫', flag: '🇻🇳', name: 'Vietnamese Dong', rateFromEur: 27400.0 },
+      VUV: { code: 'VUV', symbol: 'VT', flag: '🇻🇺', name: 'Vanuatu Vatu', rateFromEur: 129.0 },
+      WST: { code: 'WST', symbol: 'WS$', flag: '🇼🇸', name: 'Samoan Tālā', rateFromEur: 2.98 },
+      XAF: { code: 'XAF', symbol: 'FCFA', flag: '🇨🇲', name: 'Central African CFA', rateFromEur: 655.96 },
+      XCD: { code: 'XCD', symbol: '$', flag: '🇦🇬', name: 'East Caribbean Dollar', rateFromEur: 2.92 },
+      XOF: { code: 'XOF', symbol: 'CFA', flag: '🇸🇳', name: 'West African CFA', rateFromEur: 655.96 },
+      XPF: { code: 'XPF', symbol: '₣', flag: '🇵🇫', name: 'CFP Franc', rateFromEur: 119.33 },
+      YER: { code: 'YER', symbol: '﷼', flag: '🇾🇪', name: 'Yemeni Rial', rateFromEur: 270.0 },
+      ZAR: { code: 'ZAR', symbol: 'R', flag: '🇿🇦', name: 'South African Rand', rateFromEur: 19.2 },
+      ZMW: { code: 'ZMW', symbol: 'ZK', flag: '🇿🇲', name: 'Zambian Kwacha', rateFromEur: 28.8 },
+      ZWL: { code: 'ZWL', symbol: 'Z$', flag: '🇿🇼', name: 'Zimbabwean Dollar', rateFromEur: 27.5 }
+    };
+
+    const OTHER_SORTED_CODES = Object.keys(CURRENCIES)
+      .filter(code => !TOP_10_CODES.includes(code))
+      .sort((a, b) => a.localeCompare(b));
+
+    const DEFAULT_RATES_FROM_EUR = {};
+    Object.keys(CURRENCIES).forEach(code => {
+      DEFAULT_RATES_FROM_EUR[code] = CURRENCIES[code].rateFromEur;
+    });
+
+    const RATE_STORAGE_KEY = 'quotation_app_rates_cache_v1';
+
+    function formatTimestamp(dateObj) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
+    }
+
+    function loadCachedRates() {
+      try {
+        const raw = window.localStorage ? window.localStorage.getItem(RATE_STORAGE_KEY) : null;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.ratesFromEur && parsed.dateStr) {
+            return {
+              ratesFromEur: { ...DEFAULT_RATES_FROM_EUR, ...parsed.ratesFromEur },
+              dateStr: parsed.dateStr
+            };
+          }
+        }
+      } catch (e) {
+        // 忽略本地存储读取异常
+      }
+      return null;
+    }
+
+    function saveCachedRates(ratesFromEur, dateStr) {
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(RATE_STORAGE_KEY, JSON.stringify({ ratesFromEur, dateStr }));
+        }
+      } catch (e) {
+        // 忽略本地存储写入异常
+      }
+    }
+
+    const initialCachedRates = loadCachedRates();
+
+    const state = {
+      baseCurrency: 'EUR',
+      secondCurrency: 'USD',
+      thirdCurrency: 'CNY',
+      ratesFromEur: initialCachedRates ? initialCachedRates.ratesFromEur : { ...DEFAULT_RATES_FROM_EUR },
+      dateStr: initialCachedRates ? initialCachedRates.dateStr : formatTimestamp(new Date()),
+      marginPercent: 10,
+      marginRawInput: '10',
+      vatPercent: 13,
+      vatRawInput: '13',
+      activeField: 'eurDisti',
+      lastPriceField: 'eurDisti',
+      rawInput: '1.000',
+      values: {
+        eurDisti: 1.0,
+        usdDisti: 0,
+        cnyDisti: 0,
+        eurResale: 0,
+        usdResale: 0,
+        cnyResale: 0,
+        cnyResaleVat: 0
+      }
+    };
+
+    // =========================================================================
+    // 2. DOM 元素引用 (DOM Element References)
+    // =========================================================================
+    const activeRatesTextEl = document.getElementById('active-rates-text');
+    const editRateBtn = document.getElementById('edit-rate-btn');
+    const rateDateEl = document.getElementById('rate-date');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const refreshText = document.getElementById('refresh-text');
+    const customRateModal = document.getElementById('custom-rate-modal');
+    const closeRateModalBtn = document.getElementById('close-rate-modal-btn');
+    const cancelRateBtn = document.getElementById('cancel-rate-btn');
+    const confirmRateBtn = document.getElementById('confirm-rate-btn');
+    const rateModalOnlineBtn = document.getElementById('rate-modal-online-btn');
+    const rateModalBaseCodeEl = document.getElementById('rate-modal-base-code');
+    const rateModalSecondLabelEl = document.getElementById('rate-modal-second-label');
+    const rateModalSecondCodeEl = document.getElementById('rate-modal-second-code');
+    const rateModalThirdLabelEl = document.getElementById('rate-modal-third-label');
+    const rateModalThirdCodeEl = document.getElementById('rate-modal-third-code');
+    const customRateSecondInput = document.getElementById('custom-rate-second-input');
+    const customRateThirdInput = document.getElementById('custom-rate-third-input');
+    const saveBtn = document.getElementById('save-btn');
+    const saveRemarkModal = document.getElementById('save-remark-modal');
+    const saveRemarkInput = document.getElementById('save-remark-input');
+    const closeSaveModalBtn = document.getElementById('close-save-modal-btn');
+    const cancelSaveBtn = document.getElementById('cancel-save-btn');
+    const confirmSaveBtn = document.getElementById('confirm-save-btn');
+    const historyBtn = document.getElementById('history-btn');
+    const historyBadgeEl = document.getElementById('history-badge');
+    const historyModal = document.getElementById('history-modal');
+    const historyModalCountEl = document.getElementById('history-modal-count');
+    const historyListEl = document.getElementById('history-list');
+    const closeHistoryBtn = document.getElementById('close-history-btn');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    const toastEl = document.getElementById('toast');
+
+    // 三个币种下拉框
+    const currencyTrigger = document.getElementById('currency-trigger');
+    const currencyMenu = document.getElementById('currency-menu');
+    const currencyChevron = document.getElementById('currency-chevron');
+    const selectedFlagEl = document.getElementById('selected-flag');
+    const selectedLabelEl = document.getElementById('selected-label');
+
+    const secondCurrencyTrigger = document.getElementById('second-currency-trigger');
+    const secondCurrencyMenu = document.getElementById('second-currency-menu');
+    const secondCurrencyChevron = document.getElementById('second-currency-chevron');
+    const secondSelectedFlagEl = document.getElementById('second-selected-flag');
+    const secondSelectedLabelEl = document.getElementById('second-selected-label');
+
+    const thirdCurrencyTrigger = document.getElementById('third-currency-trigger');
+    const thirdCurrencyMenu = document.getElementById('third-currency-menu');
+    const thirdCurrencyChevron = document.getElementById('third-currency-chevron');
+    const thirdSelectedFlagEl = document.getElementById('third-selected-flag');
+    const thirdSelectedLabelEl = document.getElementById('third-selected-label');
+
+    // Margin 控件
+    const marginFieldBox = document.getElementById('margin-field-box');
+    const marginInputArea = document.getElementById('margin-input-area');
+    const valMarginEl = document.getElementById('val-margin');
+    const marginDropdownBtn = document.getElementById('margin-dropdown-btn');
+    const marginMenu = document.getElementById('margin-menu');
+
+    // VAT 控件
+    const vatFieldBox = document.getElementById('vat-field-box');
+    const vatInputArea = document.getElementById('vat-input-area');
+    const valVatEl = document.getElementById('val-vat');
+    const vatDropdownBtn = document.getElementById('vat-dropdown-btn');
+    const vatMenu = document.getElementById('vat-menu');
+
+    // Resale 标签与符号元素
+    const resaleFlagEl = document.getElementById('resale-flag');
+    const resaleLabelTextEl = document.getElementById('resale-label-text');
+    const secondResaleFlagEl = document.getElementById('second-resale-flag');
+    const secondResaleLabelTextEl = document.getElementById('second-resale-label-text');
+    const thirdResaleFlagEl = document.getElementById('third-resale-flag');
+    const thirdResaleLabelTextEl = document.getElementById('third-resale-label-text');
+    const thirdVatFlagEl = document.getElementById('third-vat-flag');
+    const thirdVatLabelTextEl = document.getElementById('third-vat-label-text');
+
+    const symEls = {
+      eurDisti: document.getElementById('sym-eurDisti'),
+      usdDisti: document.getElementById('sym-usdDisti'),
+      cnyDisti: document.getElementById('sym-cnyDisti'),
+      eurResale: document.getElementById('sym-eurResale'),
+      usdResale: document.getElementById('sym-usdResale'),
+      cnyResale: document.getElementById('sym-cnyResale'),
+      cnyResaleVat: document.getElementById('sym-cnyResaleVat')
+    };
+
+    const valEls = {
+      eurDisti: document.getElementById('val-eurDisti'),
+      usdDisti: document.getElementById('val-usdDisti'),
+      cnyDisti: document.getElementById('val-cnyDisti'),
+      eurResale: document.getElementById('val-eurResale'),
+      usdResale: document.getElementById('val-usdResale'),
+      cnyResale: document.getElementById('val-cnyResale'),
+      cnyResaleVat: document.getElementById('val-cnyResaleVat')
+    };
+
+    const fieldContainers = document.querySelectorAll('.calc-field');
+
+    // =========================================================================
+    // 3. 工具函数、币种渲染与双向实时计算引擎
+    // =========================================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      if (!toastEl) return;
+      toastEl.textContent = msg;
+      toastEl.classList.remove('opacity-0');
+      toastEl.classList.add('opacity-100');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove('opacity-100');
+        toastEl.classList.add('opacity-0');
+      }, 2200);
+    }
+
+    function formatNumber(num) {
+      if (!isFinite(num) || isNaN(num)) return '0.000';
+      return num.toFixed(3);
+    }
+
+    function closeAllDropdowns() {
+      [
+        { menu: currencyMenu, trigger: currencyTrigger, chevron: currencyChevron },
+        { menu: secondCurrencyMenu, trigger: secondCurrencyTrigger, chevron: secondCurrencyChevron },
+        { menu: thirdCurrencyMenu, trigger: thirdCurrencyTrigger, chevron: thirdCurrencyChevron }
+      ].forEach(item => {
+        if (item.menu) item.menu.classList.add('hidden');
+        if (item.trigger) item.trigger.setAttribute('aria-expanded', 'false');
+        if (item.chevron) item.chevron.classList.remove('rotate-180');
+      });
+      if (marginMenu) marginMenu.classList.add('hidden');
+      if (vatMenu) vatMenu.classList.add('hidden');
+    }
+
+    function buildCurrencyMenuHtml(slotKey, selectedCode, disabledCodes) {
+      const renderItem = (code) => {
+        const c = CURRENCIES[code];
+        const isSelected = code === selectedCode;
+        const isDisabled = disabledCodes.includes(code);
+        if (isDisabled) {
+          return `
+            <li role="option" aria-disabled="true" class="px-3 py-1.5 flex items-center justify-between text-gray-400 bg-gray-50/70 cursor-not-allowed select-none">
+              <span class="flex items-center gap-2 truncate">
+                <span class="text-base leading-none opacity-60">${c.flag}</span>
+                <span class="font-medium">${c.code}</span>
+                <span class="text-xs">(${c.symbol})</span>
+              </span>
+              <span class="text-[11px] px-1.5 py-0.5 rounded bg-gray-200/80 text-gray-500">已选</span>
+            </li>
+          `;
+        }
+        return `
+          <li
+            role="option"
+            data-slot="${slotKey}"
+            data-code="${c.code}"
+            aria-selected="${isSelected}"
+            class="currency-option px-3 py-1.5 flex items-center justify-between cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 text-[#1d63ed] font-semibold' : 'text-[#333333] hover:bg-gray-100'}"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="text-base leading-none">${c.flag}</span>
+              <span>${c.code}</span>
+              <span class="text-xs text-gray-400">(${c.symbol})</span>
+            </span>
+            ${isSelected ? '<span class="text-xs text-[#1d63ed]">✓</span>' : ''}
+          </li>
+        `;
+      };
+
+      const topHtml = TOP_10_CODES.map(renderItem).join('');
+      const otherHtml = OTHER_SORTED_CODES.map(renderItem).join('');
+
+      return `
+        <li class="px-3 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider select-none">常见币种 (Top 10)</li>
+        ${topHtml}
+        <li class="my-1 border-t border-gray-100"></li>
+        <li class="px-3 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider select-none">全部币种 (A–Z)</li>
+        ${otherHtml}
+      `;
+    }
+
+    function renderCurrencyMenus() {
+      currencyMenu.innerHTML = buildCurrencyMenuHtml('base', state.baseCurrency, [state.secondCurrency, state.thirdCurrency]);
+      secondCurrencyMenu.innerHTML = buildCurrencyMenuHtml('second', state.secondCurrency, [state.baseCurrency, state.thirdCurrency]);
+      thirdCurrencyMenu.innerHTML = buildCurrencyMenuHtml('third', state.thirdCurrency, [state.baseCurrency, state.secondCurrency]);
+
+      document.querySelectorAll('.currency-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const slot = opt.getAttribute('data-slot');
+          const code = opt.getAttribute('data-code');
+          if (!code || !CURRENCIES[code]) return;
+
+          if (slot === 'base' && code !== state.secondCurrency && code !== state.thirdCurrency) {
+            state.baseCurrency = code;
+          } else if (slot === 'second' && code !== state.baseCurrency && code !== state.thirdCurrency) {
+            state.secondCurrency = code;
+          } else if (slot === 'third' && code !== state.baseCurrency && code !== state.secondCurrency) {
+            state.thirdCurrency = code;
+          }
+
+          closeAllDropdowns();
+          renderCurrencyMenus();
+          updateCurrencyUI();
+          const anchorVal = state.values[state.lastPriceField] || 0;
+          recalculateFrom(state.lastPriceField, anchorVal);
+        });
+      });
+    }
+
+    function updateCurrencyUI() {
+      const c1 = CURRENCIES[state.baseCurrency];
+      const c2 = CURRENCIES[state.secondCurrency];
+      const c3 = CURRENCIES[state.thirdCurrency];
+
+      // 顶部汇率栏：显示当前页面选用的全部币种对应汇率
+      const r1 = state.ratesFromEur[c1.code] || 1;
+      const r2 = state.ratesFromEur[c2.code] || 1;
+      const r3 = state.ratesFromEur[c3.code] || 1;
+      const rate1To2 = (r2 / r1).toFixed(3);
+      const rate1To3 = (r3 / r1).toFixed(3);
+      activeRatesTextEl.innerHTML =
+        `1 <span class="font-medium text-[#333333]">${c1.code}</span> = <span class="font-bold text-[#1d63ed]">${rate1To2}</span> ${c2.code}` +
+        ` · ` +
+        `1 <span class="font-medium text-[#333333]">${c1.code}</span> = <span class="font-bold text-[#1d63ed]">${rate1To3}</span> ${c3.code}`;
+      rateDateEl.textContent = state.dateStr;
+
+      // Cost 下拉按钮
+      selectedFlagEl.textContent = c1.flag;
+      selectedLabelEl.textContent = `${c1.code} (${c1.symbol})`;
+      secondSelectedFlagEl.textContent = c2.flag;
+      secondSelectedLabelEl.textContent = `${c2.code} (${c2.symbol})`;
+      thirdSelectedFlagEl.textContent = c3.flag;
+      thirdSelectedLabelEl.textContent = `${c3.code} (${c3.symbol})`;
+
+      // Resale 标签（无 Resale Price 字符）
+      resaleFlagEl.textContent = c1.flag;
+      resaleLabelTextEl.textContent = `${c1.code} (${c1.symbol})`;
+      secondResaleFlagEl.textContent = c2.flag;
+      secondResaleLabelTextEl.textContent = `${c2.code} (${c2.symbol})`;
+      thirdResaleFlagEl.textContent = c3.flag;
+      thirdResaleLabelTextEl.textContent = `${c3.code} (${c3.symbol})`;
+      thirdVatFlagEl.textContent = c3.flag;
+      thirdVatLabelTextEl.textContent = `${c3.code} (${c3.symbol})`;
+
+      // 输入框货币符号
+      symEls.eurDisti.textContent = c1.symbol;
+      symEls.usdDisti.textContent = c2.symbol;
+      symEls.cnyDisti.textContent = c3.symbol;
+      symEls.eurResale.textContent = c1.symbol;
+      symEls.usdResale.textContent = c2.symbol;
+      symEls.cnyResale.textContent = c3.symbol;
+      symEls.cnyResaleVat.textContent = c3.symbol;
+    }
+
+    // 核心计算公式：RESALE * Margin = RESALE - COST => RESALE = COST / (1 - Margin)
+    function recalculateFrom(sourceField, sourceValue) {
+      const val = Math.max(0, Number(sourceValue) || 0);
+      const r1 = state.ratesFromEur[state.baseCurrency] || 1;
+      const r2 = state.ratesFromEur[state.secondCurrency] || 1;
+      const r3 = state.ratesFromEur[state.thirdCurrency] || 1;
+
+      const marginRatio = Math.min(0.9999, Math.max(0, (Number(state.marginPercent) || 0) / 100));
+      const vatRatio = Math.max(0, (Number(state.vatPercent) || 0) / 100);
+      const oneMinusMargin = 1 - marginRatio;
+
+      let baseCostInEur = 0;
+
+      switch (sourceField) {
+        case 'eurDisti':
+          baseCostInEur = val / r1;
+          break;
+        case 'usdDisti':
+          baseCostInEur = val / r2;
+          break;
+        case 'cnyDisti':
+          baseCostInEur = val / r3;
+          break;
+        case 'eurResale':
+          baseCostInEur = (val * oneMinusMargin) / r1;
+          break;
+        case 'usdResale':
+          baseCostInEur = (val * oneMinusMargin) / r2;
+          break;
+        case 'cnyResale':
+          baseCostInEur = (val * oneMinusMargin) / r3;
+          break;
+        case 'cnyResaleVat':
+          baseCostInEur = ((val / (1 + vatRatio)) * oneMinusMargin) / r3;
+          break;
+        default:
+          baseCostInEur = (state.values.eurDisti || 0) / r1;
+          break;
+      }
+
+      const eurDisti = baseCostInEur * r1;
+      const usdDisti = baseCostInEur * r2;
+      const cnyDisti = baseCostInEur * r3;
+
+      const eurResale = eurDisti / oneMinusMargin;
+      const usdResale = usdDisti / oneMinusMargin;
+      const cnyResale = cnyDisti / oneMinusMargin;
+      const cnyResaleVat = cnyResale * (1 + vatRatio);
+
+      state.values = {
+        eurDisti,
+        usdDisti,
+        cnyDisti,
+        eurResale,
+        usdResale,
+        cnyResale,
+        cnyResaleVat
+      };
+
+      if (sourceField !== 'margin' && sourceField !== 'vat') {
+        state.values[sourceField] = val;
+        state.lastPriceField = sourceField;
+      }
+
+      renderValues();
+    }
+
+    function renderValues() {
+      const isMarginActive = state.activeField === 'margin';
+      const isVatActive = state.activeField === 'vat';
+
+      // Margin 框高亮与文本更新
+      if (isMarginActive) {
+        marginFieldBox.classList.remove('bg-[#e5e7eb]', 'border-transparent');
+        marginFieldBox.classList.add('bg-blue-50/60', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
+        valMarginEl.textContent = state.marginRawInput === '' ? '0' : state.marginRawInput;
+      } else {
+        marginFieldBox.classList.add('bg-[#e5e7eb]', 'border-transparent');
+        marginFieldBox.classList.remove('bg-blue-50/60', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
+        valMarginEl.textContent = String(state.marginPercent);
+      }
+
+      // VAT 框高亮与文本更新
+      if (isVatActive) {
+        vatFieldBox.classList.remove('bg-[#e5e7eb]', 'border-transparent');
+        vatFieldBox.classList.add('bg-blue-50/80', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
+        valVatEl.textContent = state.vatRawInput === '' ? '0' : state.vatRawInput;
+      } else {
+        vatFieldBox.classList.add('bg-[#e5e7eb]', 'border-transparent');
+        vatFieldBox.classList.remove('bg-blue-50/80', 'border-[#1d63ed]', 'ring-2', 'ring-blue-100');
+        valVatEl.textContent = String(state.vatPercent);
+      }
+
+      // 更新 Margin 下拉菜单选中态
+      document.querySelectorAll('.margin-option').forEach(opt => {
+        const m = Number(opt.getAttribute('data-margin'));
+        if (m === state.marginPercent) {
+          opt.classList.add('text-[#1d63ed]', 'font-semibold', 'bg-blue-50/70');
+          opt.classList.remove('text-[#333333]');
+        } else {
+          opt.classList.remove('text-[#1d63ed]', 'font-semibold', 'bg-blue-50/70');
+          opt.classList.add('text-[#333333]');
+        }
+      });
+
+      // 更新 VAT 下拉菜单选中态
+      document.querySelectorAll('.vat-option').forEach(opt => {
+        const v = Number(opt.getAttribute('data-vat'));
+        if (v === state.vatPercent) {
+          opt.classList.add('text-[#1d63ed]', 'font-semibold', 'bg-blue-50/70');
+          opt.classList.remove('text-[#333333]');
+        } else {
+          opt.classList.remove('text-[#1d63ed]', 'font-semibold', 'bg-blue-50/70');
+          opt.classList.add('text-[#333333]');
+        }
+      });
+
+      // 各价格输入框渲染
+      Object.keys(valEls).forEach(key => {
+        const el = valEls[key];
+        const symEl = symEls[key];
+        const container = el.parentElement;
+        const isActive = state.activeField === key;
+
+        if (isActive) {
+          container.classList.remove('border-[#e5e7eb]');
+          container.classList.add('border-[#1d63ed]', 'ring-2', 'ring-blue-100', 'bg-blue-50/20');
+          el.classList.remove('text-[#b0b5bd]');
+          el.classList.add('text-[#111827]', 'font-semibold');
+          if (symEl) {
+            symEl.classList.remove('text-[#9ca3af]');
+            symEl.classList.add('text-[#1d63ed]');
+          }
+          el.textContent = state.rawInput === '' ? '0.000' : state.rawInput;
+        } else {
+          container.classList.add('border-[#e5e7eb]');
+          container.classList.remove('border-[#1d63ed]', 'ring-2', 'ring-blue-100', 'bg-blue-50/20');
+          el.classList.add('text-[#b0b5bd]');
+          el.classList.remove('text-[#111827]', 'font-semibold');
+          if (symEl) {
+            symEl.classList.add('text-[#9ca3af]');
+            symEl.classList.remove('text-[#1d63ed]');
+          }
+          el.textContent = formatNumber(state.values[key]);
+        }
+      });
+    }
+
+    function finalizeMarginIfNeeded() {
+      if (state.activeField === 'margin') {
+        if (state.marginRawInput === '' || state.marginRawInput === '.') {
+          state.marginPercent = 10;
+          state.marginRawInput = '10';
+        }
+      }
+      if (state.activeField === 'vat') {
+        if (state.vatRawInput === '' || state.vatRawInput === '.') {
+          state.vatPercent = 13;
+          state.vatRawInput = '13';
+        }
+      }
+    }
+
+    // 选中除了 Margin/VAT 外的任意价格输入框时，所有输入框清零
+    function selectField(field) {
+      finalizeMarginIfNeeded();
+
+      if (field === 'margin') {
+        state.activeField = 'margin';
+        state.marginRawInput = '';
+        renderValues();
+        return;
+      }
+
+      if (field === 'vat') {
+        state.activeField = 'vat';
+        state.vatRawInput = '';
+        renderValues();
+        return;
+      }
+
+      state.activeField = field;
+      state.lastPriceField = field;
+      state.rawInput = '';
+      recalculateFrom(field, 0);
+    }
+
+    function handleKeyInput(key) {
+      // Margin 自定义输入分支
+      if (state.activeField === 'margin') {
+        if (key === 'C') {
+          state.marginPercent = 10;
+          state.marginRawInput = '10';
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+          return;
+        }
+        if (key === 'BACKSPACE') {
+          state.marginRawInput = state.marginRawInput.slice(0, -1);
+          const num = state.marginRawInput === '' || state.marginRawInput === '.' ? 0 : parseFloat(state.marginRawInput);
+          state.marginPercent = Math.min(99.9, Math.max(0, num));
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+          return;
+        }
+        if (key === '.') {
+          if (state.marginRawInput.includes('.')) return;
+          state.marginRawInput = state.marginRawInput === '' ? '0.' : state.marginRawInput + '.';
+          renderValues();
+          return;
+        }
+        if (key >= '0' && key <= '9') {
+          let next = state.marginRawInput;
+          if (next === '0') {
+            next = key;
+          } else {
+            next += key;
+          }
+          const parts = next.split('.');
+          if (parts[1] && parts[1].length > 2) return;
+          const parsed = parseFloat(next);
+          if (!isNaN(parsed) && parsed >= 100) {
+            showToast('Margin 必须小于 100%');
+            return;
+          }
+          state.marginRawInput = next;
+          state.marginPercent = isNaN(parsed) ? 0 : parsed;
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+        }
+        return;
+      }
+
+      // VAT 自定义输入分支
+      if (state.activeField === 'vat') {
+        if (key === 'C') {
+          state.vatPercent = 13;
+          state.vatRawInput = '13';
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+          return;
+        }
+        if (key === 'BACKSPACE') {
+          state.vatRawInput = state.vatRawInput.slice(0, -1);
+          const num = state.vatRawInput === '' || state.vatRawInput === '.' ? 0 : parseFloat(state.vatRawInput);
+          state.vatPercent = Math.min(100, Math.max(0, num));
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+          return;
+        }
+        if (key === '.') {
+          if (state.vatRawInput.includes('.')) return;
+          state.vatRawInput = state.vatRawInput === '' ? '0.' : state.vatRawInput + '.';
+          renderValues();
+          return;
+        }
+        if (key >= '0' && key <= '9') {
+          let next = state.vatRawInput;
+          if (next === '0') {
+            next = key;
+          } else {
+            next += key;
+          }
+          const parts = next.split('.');
+          if (parts[1] && parts[1].length > 2) return;
+          const parsed = parseFloat(next);
+          if (!isNaN(parsed) && parsed > 100) {
+            showToast('VAT 税率不能超过 100%');
+            return;
+          }
+          state.vatRawInput = next;
+          state.vatPercent = isNaN(parsed) ? 0 : parsed;
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+        }
+        return;
+      }
+
+      // 价格输入框键盘输入分支
+      const field = state.activeField;
+      if (key === 'C') {
+        state.rawInput = '';
+        recalculateFrom(field, 0);
+        return;
+      }
+      if (key === 'BACKSPACE') {
+        state.rawInput = state.rawInput.slice(0, -1);
+        const num = state.rawInput === '' || state.rawInput === '.' ? 0 : parseFloat(state.rawInput);
+        recalculateFrom(field, num);
+        return;
+      }
+      if (key === '.') {
+        if (state.rawInput.includes('.')) return;
+        state.rawInput = state.rawInput === '' ? '0.' : state.rawInput + '.';
+        renderValues();
+        return;
+      }
+      if (key >= '0' && key <= '9') {
+        if (state.rawInput === '1.000' && field === 'eurDisti' && state.values.eurDisti === 1.0) {
+          state.rawInput = '';
+        }
+        let next = state.rawInput;
+        if (next === '0') {
+          next = key;
+        } else {
+          next += key;
+        }
+        const parts = next.split('.');
+        if (parts[0].length > 10) return;
+        if (parts[1] && parts[1].length > 3) return;
+        state.rawInput = next;
+        const parsed = parseFloat(next);
+        recalculateFrom(field, isNaN(parsed) ? 0 : parsed);
+      }
+    }
+
+    // 实时汇率拉取（20秒超时控制，超时或失败回退至最近一次保存的汇率与时间）
+    async function fetchLiveRates(isInitial = false) {
+      if (refreshBtn.disabled) return;
+      refreshBtn.disabled = true;
+      refreshText.textContent = 'Updating...';
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/EUR', {
+          signal: controller.signal,
+          cache: 'no-store'
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data && data.rates) {
+          Object.keys(CURRENCIES).forEach(code => {
+            if (typeof data.rates[code] === 'number' && data.rates[code] > 0) {
+              state.ratesFromEur[code] = data.rates[code];
+            }
+          });
+          state.dateStr = formatTimestamp(new Date());
+          saveCachedRates(state.ratesFromEur, state.dateStr);
+          updateCurrencyUI();
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+          if (!isInitial) showToast('实时汇率已更新');
+        } else {
+          throw new Error('Invalid payload');
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const cached = loadCachedRates();
+        if (cached) {
+          state.ratesFromEur = cached.ratesFromEur;
+          state.dateStr = cached.dateStr;
+          updateCurrencyUI();
+          recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+          showToast('更新超时/失败，已使用最近保存的汇率');
+        } else {
+          showToast('离线模式：使用默认内置汇率');
+        }
+      } finally {
+        refreshBtn.disabled = false;
+        refreshText.textContent = 'Refresh';
+      }
+    }
+
+    // 绑定三个币种下拉触发器与价格框点击事件
+    function setupCurrencyDropdown(trigger, menu, chevron) {
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = menu.classList.contains('hidden');
+        closeAllDropdowns();
+        if (isHidden) {
+          menu.classList.remove('hidden');
+          trigger.setAttribute('aria-expanded', 'true');
+          chevron.classList.add('rotate-180');
+        }
+      });
+    }
+
+    setupCurrencyDropdown(currencyTrigger, currencyMenu, currencyChevron);
+    setupCurrencyDropdown(secondCurrencyTrigger, secondCurrencyMenu, secondCurrencyChevron);
+    setupCurrencyDropdown(thirdCurrencyTrigger, thirdCurrencyMenu, thirdCurrencyChevron);
+
+    marginInputArea.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      selectField('margin');
+    });
+
+    marginDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = marginMenu.classList.contains('hidden');
+      closeAllDropdowns();
+      if (isHidden) {
+        marginMenu.classList.remove('hidden');
+      }
+    });
+
+    document.querySelectorAll('.margin-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const m = Number(opt.getAttribute('data-margin'));
+        state.marginPercent = m;
+        state.marginRawInput = String(m);
+        if (state.activeField === 'margin') {
+          state.activeField = state.lastPriceField;
+        }
+        closeAllDropdowns();
+        recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+      });
+    });
+
+    vatInputArea.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      selectField('vat');
+    });
+
+    vatDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = vatMenu.classList.contains('hidden');
+      closeAllDropdowns();
+      if (isHidden) {
+        vatMenu.classList.remove('hidden');
+      }
+    });
+
+    document.querySelectorAll('.vat-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const v = Number(opt.getAttribute('data-vat'));
+        state.vatPercent = v;
+        state.vatRawInput = String(v);
+        if (state.activeField === 'vat') {
+          state.activeField = state.lastPriceField;
+        }
+        closeAllDropdowns();
+        recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+      });
+    });
+
+    fieldContainers.forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllDropdowns();
+        const field = el.getAttribute('data-field');
+        if (field) selectField(field);
+      });
+    });
+
+    document.querySelectorAll('[data-key]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllDropdowns();
+        const key = btn.getAttribute('data-key');
+        if (key) handleKeyInput(key);
+      });
+    });
+
+    document.addEventListener('click', () => {
+      closeAllDropdowns();
+    });
+
+    refreshBtn.addEventListener('click', () => fetchLiveRates(false));
+
+    // =========================================================================
+    // 3.5 自定义汇率弹窗交互 (Custom Exchange Rate Modal)
+    // =========================================================================
+    function openCustomRateModal() {
+      const c1 = CURRENCIES[state.baseCurrency];
+      const c2 = CURRENCIES[state.secondCurrency];
+      const c3 = CURRENCIES[state.thirdCurrency];
+      const r1 = state.ratesFromEur[c1.code] || 1;
+      const r2 = state.ratesFromEur[c2.code] || 1;
+      const r3 = state.ratesFromEur[c3.code] || 1;
+
+      rateModalBaseCodeEl.textContent = c1.code;
+      document.querySelectorAll('.rate-modal-base-label').forEach(el => {
+        el.textContent = c1.code;
+      });
+      rateModalSecondLabelEl.textContent = `${c2.flag} ${c2.code}`;
+      rateModalSecondCodeEl.textContent = c2.code;
+      rateModalThirdLabelEl.textContent = `${c3.flag} ${c3.code}`;
+      rateModalThirdCodeEl.textContent = c3.code;
+
+      customRateSecondInput.value = Number((r2 / r1).toFixed(4));
+      customRateThirdInput.value = Number((r3 / r1).toFixed(4));
+
+      customRateModal.classList.remove('hidden');
+      setTimeout(() => {
+        customRateThirdInput.focus();
+        customRateThirdInput.select();
+      }, 30);
+    }
+
+    function closeCustomRateModal() {
+      customRateModal.classList.add('hidden');
+    }
+
+    function applyCustomRates() {
+      const val2 = parseFloat(customRateSecondInput.value);
+      const val3 = parseFloat(customRateThirdInput.value);
+
+      if (!isFinite(val2) || val2 <= 0 || !isFinite(val3) || val3 <= 0) {
+        showToast('请输入大于 0 的有效汇率数值');
+        return;
+      }
+
+      const baseEurRate = state.ratesFromEur[state.baseCurrency] || 1;
+      state.ratesFromEur[state.secondCurrency] = baseEurRate * val2;
+      state.ratesFromEur[state.thirdCurrency] = baseEurRate * val3;
+      state.dateStr = `${formatTimestamp(new Date())} (Custom)`;
+
+      saveCachedRates(state.ratesFromEur, state.dateStr);
+      updateCurrencyUI();
+      recalculateFrom(state.lastPriceField, state.values[state.lastPriceField] || 0);
+      closeCustomRateModal();
+      showToast('已应用自定义汇率');
+    }
+
+    activeRatesTextEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      openCustomRateModal();
+    });
+
+    editRateBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      openCustomRateModal();
+    });
+
+    closeRateModalBtn.addEventListener('click', closeCustomRateModal);
+    cancelRateBtn.addEventListener('click', closeCustomRateModal);
+    confirmRateBtn.addEventListener('click', applyCustomRates);
+
+    rateModalOnlineBtn.addEventListener('click', async () => {
+      closeCustomRateModal();
+      await fetchLiveRates(false);
+    });
+
+    customRateModal.addEventListener('click', (e) => {
+      if (e.target === customRateModal) {
+        closeCustomRateModal();
+      }
+    });
+
+    [customRateSecondInput, customRateThirdInput].forEach(inp => {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyCustomRates();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeCustomRateModal();
+        }
+      });
+    });
+
+    // =========================================================================
+    // 4. 报价保存与历史记录管理 (Save & History)
+    // =========================================================================
+    const HISTORY_STORAGE_KEY = 'quotation_app_history_v1';
+    let quotationHistory = [];
+
+    function updateHistoryBadge() {
+      const count = quotationHistory.length;
+      if (historyModalCountEl) {
+        historyModalCountEl.textContent = String(count);
+      }
+      if (historyBadgeEl) {
+        if (count > 0) {
+          historyBadgeEl.textContent = String(count);
+          historyBadgeEl.classList.remove('hidden');
+        } else {
+          historyBadgeEl.classList.add('hidden');
+        }
+      }
+    }
+
+    function loadQuotationHistory() {
+      try {
+        const raw = window.localStorage ? window.localStorage.getItem(HISTORY_STORAGE_KEY) : null;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            quotationHistory = parsed;
+          }
+        }
+      } catch (e) {
+        quotationHistory = [];
+      }
+      updateHistoryBadge();
+    }
+
+    function persistQuotationHistory() {
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(quotationHistory));
+        }
+      } catch (e) {
+        // 忽略本地存储写入异常
+      }
+      updateHistoryBadge();
+    }
+
+    function saveCurrentQuotation(remarkText = '') {
+      const c1 = CURRENCIES[state.baseCurrency];
+      const c2 = CURRENCIES[state.secondCurrency];
+      const c3 = CURRENCIES[state.thirdCurrency];
+      const r1 = state.ratesFromEur[c1.code] || 1;
+      const r2 = state.ratesFromEur[c2.code] || 1;
+      const r3 = state.ratesFromEur[c3.code] || 1;
+
+      const rate1To2 = (r2 / r1).toFixed(3);
+      const rate1To3 = (r3 / r1).toFixed(3);
+
+      const usedRates = {
+        [c1.code]: 1,
+        [c2.code]: Number(rate1To2),
+        [c3.code]: Number(rate1To3)
+      };
+
+      const ratePairs = [
+        `1 ${c1.code} = ${rate1To2} ${c2.code}`,
+        `1 ${c1.code} = ${rate1To3} ${c3.code}`
+      ];
+
+      const savedRatesFromEur = {
+        [c1.code]: r1,
+        [c2.code]: r2,
+        [c3.code]: r3
+      };
+
+      const record = {
+        id: Date.now().toString(),
+        remark: remarkText.trim(),
+        savedAt: formatTimestamp(new Date()),
+        rateSummary: `1 ${c1.code} = ${rate1To3} ${c3.code}`,
+        rateDetails: ratePairs.join(' · '),
+        usedRates,
+        rateDate: state.dateStr,
+        baseCurrency: state.baseCurrency,
+        secondCurrency: state.secondCurrency,
+        thirdCurrency: state.thirdCurrency,
+        ratesFromEur: savedRatesFromEur,
+        marginPercent: state.marginPercent,
+        vatPercent: state.vatPercent,
+        values: {
+          ...state.values
+        }
+      };
+
+      quotationHistory.unshift(record);
+      if (quotationHistory.length > 50) {
+        quotationHistory = quotationHistory.slice(0, 50);
+      }
+      persistQuotationHistory();
+      showToast('已保存当前报价及对应汇率');
+    }
+
+    function openSaveRemarkModal() {
+      saveRemarkInput.value = '';
+      saveRemarkModal.classList.remove('hidden');
+      setTimeout(() => {
+        saveRemarkInput.focus();
+      }, 30);
+    }
+
+    function closeSaveRemarkModal() {
+      saveRemarkModal.classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderHistoryModal() {
+      updateHistoryBadge();
+      if (quotationHistory.length === 0) {
+        historyListEl.innerHTML = `
+          <div class="py-12 text-center text-gray-400 text-sm">
+            暂无保存的报价记录，点击右上角 <span class="text-[#1d63ed] font-medium">Save</span> 即可保存当前报价。
+          </div>
+        `;
+        return;
+      }
+
+      historyListEl.innerHTML = quotationHistory.map((item) => {
+        const c1 = CURRENCIES[item.baseCurrency] || CURRENCIES.EUR;
+        const c2 = CURRENCIES[item.secondCurrency] || CURRENCIES.USD;
+        const c3 = CURRENCIES[item.thirdCurrency] || CURRENCIES.CNY;
+        const remarkBadge = item.remark
+          ? `<div class="mt-1.5 text-xs font-medium text-[#111827] bg-amber-50/90 border border-amber-200/80 text-amber-900 px-2.5 py-1 rounded-lg break-all">备注：${escapeHtml(item.remark)}</div>`
+          : '';
+        const ratesBarText = item.rateDetails || item.rateSummary || '';
+        const ratesBadge = ratesBarText
+          ? `<div class="mt-1.5 text-[11px] text-[#1d63ed] bg-blue-50/80 border border-blue-100 px-2.5 py-1 rounded-lg flex flex-wrap items-center justify-between gap-1">
+              <span class="font-medium">汇率：${escapeHtml(ratesBarText)}</span>
+              ${item.rateDate ? `<span class="text-[10px] text-gray-400">@ ${escapeHtml(item.rateDate)}</span>` : ''}
+            </div>`
+          : '';
+        const savedVatPercent = typeof item.vatPercent === 'number' ? item.vatPercent : 13;
+
+        return `
+          <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 hover:bg-blue-50/30 transition-colors">
+            <div class="flex items-center justify-between gap-2 pb-2 border-b border-gray-100">
+              <div class="text-xs text-gray-500 min-w-0">
+                <span class="font-medium text-gray-700">${item.savedAt}</span>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  data-load-id="${item.id}"
+                  class="px-2.5 py-1 text-xs font-medium text-[#1d63ed] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  Load
+                </button>
+                <button
+                  type="button"
+                  data-del-id="${item.id}"
+                  class="px-2 py-1 text-xs font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  Del
+                </button>
+              </div>
+            </div>
+            ${remarkBadge}
+            ${ratesBadge}
+            <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+              <div class="bg-white rounded-lg p-2 border border-gray-100">
+                <div class="text-[11px] font-semibold text-gray-400 uppercase mb-1">Cost</div>
+                <div class="flex justify-between tabular-nums"><span>${c1.flag} ${c1.code}</span><span class="font-medium text-gray-800">${c1.symbol}${formatNumber(item.values.eurDisti)}</span></div>
+                <div class="flex justify-between tabular-nums mt-0.5"><span>${c2.flag} ${c2.code}</span><span class="font-medium text-gray-800">${c2.symbol}${formatNumber(item.values.usdDisti)}</span></div>
+                <div class="flex justify-between tabular-nums mt-0.5"><span>${c3.flag} ${c3.code}</span><span class="font-medium text-gray-800">${c3.symbol}${formatNumber(item.values.cnyDisti)}</span></div>
+              </div>
+              <div class="bg-white rounded-lg p-2 border border-gray-100">
+                <div class="flex items-center justify-between text-[11px] font-semibold text-gray-400 uppercase mb-1">
+                  <span>Resale</span>
+                  <span class="text-[#1d63ed]">Margin ${item.marginPercent}%</span>
+                </div>
+                <div class="flex justify-between tabular-nums"><span>${c1.flag} ${c1.code}</span><span class="font-medium text-gray-800">${c1.symbol}${formatNumber(item.values.eurResale)}</span></div>
+                <div class="flex justify-between tabular-nums mt-0.5"><span>${c2.flag} ${c2.code}</span><span class="font-medium text-gray-800">${c2.symbol}${formatNumber(item.values.usdResale)}</span></div>
+                <div class="flex justify-between tabular-nums mt-0.5"><span>${c3.flag} ${c3.code}</span><span class="font-medium text-gray-800">${c3.symbol}${formatNumber(item.values.cnyResale)}</span></div>
+                <div class="flex justify-between tabular-nums mt-0.5 pt-0.5 border-t border-gray-50"><span>${c3.flag} ${c3.code} (${savedVatPercent}% VAT)</span><span class="font-semibold text-[#1d63ed]">${c3.symbol}${formatNumber(item.values.cnyResaleVat)}</span></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      historyListEl.querySelectorAll('[data-load-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-load-id');
+          const found = quotationHistory.find(r => r.id === id);
+          if (!found) return;
+          state.baseCurrency = found.baseCurrency;
+          state.secondCurrency = found.secondCurrency;
+          state.thirdCurrency = found.thirdCurrency;
+          if (found.ratesFromEur) {
+            state.ratesFromEur = { ...state.ratesFromEur, ...found.ratesFromEur };
+          }
+          if (found.rateDate) state.dateStr = found.rateDate;
+          state.marginPercent = found.marginPercent;
+          state.marginRawInput = String(found.marginPercent);
+          const restoredVat = typeof found.vatPercent === 'number' ? found.vatPercent : 13;
+          state.vatPercent = restoredVat;
+          state.vatRawInput = String(restoredVat);
+          state.activeField = 'eurDisti';
+          state.lastPriceField = 'eurDisti';
+          state.rawInput = formatNumber(found.values.eurDisti);
+
+          renderCurrencyMenus();
+          updateCurrencyUI();
+          recalculateFrom('eurDisti', found.values.eurDisti);
+          historyModal.classList.add('hidden');
+          showToast('已恢复历史报价数据');
+        });
+      });
+
+      historyListEl.querySelectorAll('[data-del-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-del-id');
+          quotationHistory = quotationHistory.filter(r => r.id !== id);
+          persistQuotationHistory();
+          renderHistoryModal();
+        });
+      });
+    }
+
+    saveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      openSaveRemarkModal();
+    });
+
+    closeSaveModalBtn.addEventListener('click', closeSaveRemarkModal);
+    cancelSaveBtn.addEventListener('click', closeSaveRemarkModal);
+    confirmSaveBtn.addEventListener('click', () => {
+      const remark = saveRemarkInput.value;
+      closeSaveRemarkModal();
+      saveCurrentQuotation(remark);
+    });
+    saveRemarkModal.addEventListener('click', (e) => {
+      if (e.target === saveRemarkModal) {
+        closeSaveRemarkModal();
+      }
+    });
+    saveRemarkInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const remark = saveRemarkInput.value;
+        closeSaveRemarkModal();
+        saveCurrentQuotation(remark);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeSaveRemarkModal();
+      }
+    });
+
+    historyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      renderHistoryModal();
+      historyModal.classList.remove('hidden');
+    });
+
+    closeHistoryBtn.addEventListener('click', () => {
+      historyModal.classList.add('hidden');
+    });
+
+    clearHistoryBtn.addEventListener('click', () => {
+      quotationHistory = [];
+      persistQuotationHistory();
+      renderHistoryModal();
+      showToast('已清空历史记录');
+    });
+
+    historyModal.addEventListener('click', (e) => {
+      if (e.target === historyModal) {
+        historyModal.classList.add('hidden');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!customRateModal.classList.contains('hidden')) {
+        return;
+      }
+      if (!saveRemarkModal.classList.contains('hidden')) {
+        return;
+      }
+      if (!historyModal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+          historyModal.classList.add('hidden');
+        }
+        return;
+      }
+      if ((e.key >= '0' && e.key <= '9') || e.key === '.') {
+        e.preventDefault();
+        closeAllDropdowns();
+        handleKeyInput(e.key);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleKeyInput('BACKSPACE');
+      } else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        handleKeyInput('C');
+      }
+    });
+
+    // 初始化默认渲染（Disti Margin 默认值为 10%，主币种成本默认 1.000，并第一时间自动请求最新汇率）
+    loadQuotationHistory();
+    state.marginPercent = 10;
+    state.marginRawInput = '10';
+    renderCurrencyMenus();
+    updateCurrencyUI();
+    state.rawInput = '1.000';
+    recalculateFrom('eurDisti', 1.000);
+    fetchLiveRates(true);
+  </script>
+</body>
+</html>
